@@ -23,7 +23,7 @@ Histórico e preferências existentes são preservados em `%LOCALAPPDATA%\Grazi`
 ## Novidades
 
 - Interface menor: Grazi inicia em 170 px e o balão em 270 px; o tamanho da personagem pode ser ajustado em Personalizar.
-- Ativação opcional ao ouvir “Grazi”, usando o reconhecedor local pt-BR do Windows. A escuta pausa enquanto ela fala e desliga se o reconhecedor não estiver disponível.
+- Ativação por voz ao ouvir “Grazi”, usando o reconhecedor local pt-BR do Windows. Ela inicia automaticamente por padrão, inclusive ao atualizar uma instalação antiga, pausa enquanto a Grazi fala e tenta novamente se houver uma falha temporária. Pode ser desligada em Personalizar.
 - Pasta de trabalho escolhida em Personalizar. Comandos explícitos para listar, abrir e ler arquivos, salvar texto/respostas, enviar arquivos à Lixeira, abrir Calculadora/Bloco de Notas e solicitar o fechamento de instâncias abertas pela Grazi.
 - Arquivos são restritos à pasta escolhida; executáveis não são abertos. Sobrescrita e exclusão exigem confirmação. Fechamento usa WM_CLOSE e preserva pedidos de salvamento do aplicativo.
 
@@ -45,7 +45,7 @@ Histórico e preferências existentes são preservados em `%LOCALAPPDATA%\Grazi`
 
 Depois de escolher a **Pasta de trabalho** em Personalizar, a Grazi entende comandos explícitos como:
 
-`listar arquivos` · `abrir pasta` · `abrir arquivo contrato.pdf` · `ler arquivo notas.txt` · `salvar arquivo notas.txt | conteúdo` · `salvar resposta em resposta.txt` · `excluir arquivo notas.txt` · `abrir calculadora` · `fechar calculadora`.
+`listar arquivos` · `abrir pasta` · `abrir arquivo contrato.pdf` · `ler arquivo notas.txt` · `salvar arquivo notas.txt | conteúdo` · `salvar resposta em resposta.txt` · `excluir arquivo notas.txt` · `abrir (ou abra) calculadora` · `fechar (ou feche) calculadora`.
 
 O comando de fechar apenas solicita o fechamento de instâncias abertas pela Grazi; ele não força o encerramento de processos nem interfere em aplicativos que você abriu separadamente.
 

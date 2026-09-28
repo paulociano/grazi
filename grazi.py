@@ -269,7 +269,7 @@ class Settings(QDialog):
             QMessageBox.warning(self, "Modelo local", "Informe o nome de um modelo local do Ollama.")
             return
         self.c.state.update(model=model, voice=self.voice.isChecked(), voice_engine=self.engine.currentData(), motion=self.motion.isChecked(),
-            wake_word=self.wake_word.isChecked(), file_root=self.file_root.text(),
+            wake_word=self.wake_word.isChecked(), wake_word_configured=True, file_root=self.file_root.text(),
             auto_sleep=self.auto_sleep.isChecked(), sleep_minutes=self.sleep_minutes.value(),
             size=self.size.value(), memory=self.memory.toPlainText()[:8000])
         self.c.idle.timeout = self.c.state["sleep_minutes"] * 60
@@ -333,6 +333,7 @@ class Controller:
         self.speech.speaking.connect(self.voice_state)
         self.speech.page.connect(self.balloon.select_page)
         self.speech.error.connect(self.voice_error)
+        QTimer.singleShot(1500, self.sync_wake)
         app.aboutToQuit.connect(self.stop_voice)
         app.aboutToQuit.connect(self.wake.stop)
         self.tray = QSystemTrayIcon(QIcon(str(ROOT / "assets/grazi.png")), app)
@@ -370,10 +371,11 @@ class Controller:
             self.wake.stop()
 
     def disable_wake(self):
-        self.state['wake_word'] = False; self.wake.stop(); self.persist(); self.update_label()
+        self.state['wake_word'] = False; self.state['wake_word_configured'] = True
+        self.wake.stop(); self.persist(); self.update_label()
 
     def wake_error(self, text):
-        self.disable_wake()
+        self.next_wake = time.monotonic() + 10
         self.window.line('Microfone', text); self.balloon.message(text)
 
     def on_wake(self):

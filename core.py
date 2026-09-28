@@ -12,7 +12,7 @@ import urllib.request
 from pathlib import Path
 
 OLLAMA = "http://127.0.0.1:11434"
-DEFAULT = {"model": "qwen3:1.7b", "voice": False, "voice_engine": "windows", "motion": True, "auto_sleep": True, "sleep_minutes": 1, "size": 170, "compact_ui": 1, "file_root": "", "wake_word": False,
+DEFAULT = {"model": "qwen3:1.7b", "voice": False, "voice_engine": "windows", "motion": True, "auto_sleep": True, "sleep_minutes": 1, "size": 170, "compact_ui": 1, "file_root": "", "wake_word": True, "wake_word_configured": False,
            "memory": "O usuário se chama Paulo. Minha aparência é inspirada na cachorrinha Grazi.",
            "history": [], "position": None}
 
@@ -34,9 +34,14 @@ def load_state():
                     state[key] = raw[key][:8000]
             if raw.get("voice_engine") in ("windows", "edge"):
                 state["voice_engine"] = raw["voice_engine"]
-            for key in ("voice", "motion", "auto_sleep", "wake_word"):
+            for key in ("voice", "motion", "auto_sleep", "wake_word", "wake_word_configured"):
                 if isinstance(raw.get(key), bool):
                     state[key] = raw[key]
+            # Versions before automatic wake-up stored false without recording
+            # whether the user had consciously disabled it. Migrate that old
+            # default to the requested automatic activation.
+            if "wake_word" in raw and "wake_word_configured" not in raw:
+                state["wake_word"] = True
             if type(raw.get("sleep_minutes")) is int:
                 state["sleep_minutes"] = max(1, min(30, raw["sleep_minutes"]))
             if isinstance(raw.get("size"), int):

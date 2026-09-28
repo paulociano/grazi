@@ -40,7 +40,7 @@ Em **Personalizar**, você pode desligar o repouso automático ou ajustar o temp
 
 ## Ativação por voz
 
-Em **Personalizar**, marque **Ativar ao ouvir “Grazi”**. A Grazi usa o reconhecedor `System.Speech` local do Windows, com uma gramática que escuta somente a palavra de ativação. Ao ouvir “Grazi”, o reconhecimento de ditado é iniciado para você falar e revisar o pedido. A escuta pausa enquanto ela processa ou fala e não usa gravação contínua na nuvem. É necessário instalar um reconhecedor de fala **Português (Brasil)** no Windows; se ele não existir, a opção se desliga e o balão explica o problema.
+Em **Personalizar**, a opção **Ativar ao ouvir “Grazi”** fica ligada por padrão em instalações novas e é migrada para instalações antigas que ainda não tinham uma escolha explícita. A Grazi usa o reconhecedor `System.Speech` local do Windows, com uma gramática que escuta somente a palavra de ativação. Ao ouvir “Grazi”, o reconhecimento de ditado é iniciado para você falar e revisar o pedido. A escuta pausa enquanto ela processa ou fala e não usa gravação contínua na nuvem. É necessário instalar um reconhecedor de fala **Português (Brasil)** no Windows; se houver uma falha temporária, a Grazi mostra o diagnóstico e tenta novamente. Você pode desligá-la em Personalizar ou no menu do botão direito.
 
 ## Arquivos e aplicativos
 

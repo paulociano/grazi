@@ -15,8 +15,8 @@ ler arquivo notas.txt
 salvar arquivo notas.txt | conteúdo do arquivo
 salvar resposta em resposta.txt
 excluir arquivo notas.txt (Lixeira, com confirmação)
-abrir calculadora / abrir bloco de notas
-fechar calculadora / fechar bloco de notas (instâncias abertas pela Grazi)
+abrir/abra calculadora, bloco de notas, terminal, explorador, Chrome, Edge, Word, Excel ou VS Code
+fechar/feche calculadora ou bloco de notas (instâncias abertas pela Grazi)
 Escolha sua pasta em Personalizar → Pasta de trabalho.'''
 
 
@@ -87,15 +87,33 @@ class AssistantActions:
         value = text.casefold()
         if value in {'ajuda', 'comandos', 'o que você pode fazer', 'o que voce pode fazer'}:
             return HELP
-        apps = {'calculadora': 'calc.exe', 'bloco de notas': 'notepad.exe'}
+        apps = {
+            'calculadora': 'calc.exe',
+            'bloco de notas': 'notepad.exe',
+            'terminal': 'wt.exe',
+            'explorador de arquivos': 'explorer.exe',
+            'chrome': 'chrome.exe',
+            'google chrome': 'chrome.exe',
+            'edge': 'msedge.exe',
+            'microsoft edge': 'msedge.exe',
+            'word': 'winword.exe',
+            'excel': 'excel.exe',
+            'visual studio code': 'code.exe',
+            'vscode': 'code.exe',
+        }
         for name, executable in apps.items():
-            if value in {f'abrir {name}', f'abrir a {name}', f'abrir o {name}', name}:
+            if value in {f'abrir {name}', f'abrir a {name}', f'abrir o {name}',
+                         f'abra {name}', f'abra a {name}', f'abra o {name}',
+                         f'iniciar {name}', f'inicie {name}', name}:
                 if os.name != 'nt':
                     return 'A abertura de aplicativos está disponível no Windows.'
-                process = subprocess.Popen([executable], close_fds=True)
+                try:
+                    process = subprocess.Popen([executable], close_fds=True)
+                except (FileNotFoundError, OSError):
+                    return f'Não encontrei {name} instalado neste Windows.'
                 self.processes.setdefault(name, []).append(process)
                 return f'Solicitei a abertura de {name}.'
-            if value == f'fechar {name}':
+            if value in {f'fechar {name}', f'feche {name}', f'encerrar {name}', f'encerre {name}'}:
                 return self.close_app(name)
         if value == 'listar arquivos':
             entries = sorted(self.root().iterdir(), key=lambda p: (not p.is_dir(), p.name.casefold()))

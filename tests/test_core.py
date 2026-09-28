@@ -41,6 +41,10 @@ class CoreTests(unittest.TestCase):
                 (Path(directory)/"state.json").write_text('{"history": [null, {"role":"system", "content":"bad"}], "size":9999}')
                 self.assertEqual(core.load_state()["history"], [])
                 self.assertEqual(core.load_state()["size"], 220)
+                (Path(directory)/"state.json").write_text('{"wake_word": false}')
+                self.assertTrue(core.load_state()["wake_word"])
+                (Path(directory)/"state.json").write_text('{"wake_word": false, "wake_word_configured": true}')
+                self.assertFalse(core.load_state()["wake_word"])
             finally:
                 if old is None: os.environ.pop("GRAZI_DATA_DIR", None)
                 else: os.environ["GRAZI_DATA_DIR"] = old

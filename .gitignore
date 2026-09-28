@@ -10,3 +10,5 @@ state.json
 *.log
 build/
 dist/
+
+.venv-py312/

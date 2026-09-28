@@ -9,12 +9,12 @@ Assistente de desktop para Windows, com aparência inspirada na cachorrinha Graz
 ## Começar
 
 1. Baixe este repositório em **Code → Download ZIP** e extraia a pasta.
-2. Instale [Python 3.12 para Windows](https://www.python.org/downloads/windows/) com Python Launcher.
+2. Instale [Python 3.12 para Windows](https://www.python.org/downloads/release/python-31210/) com Python Launcher.
 3. Instale e abra [Ollama](https://ollama.com/download/windows).
 4. No Terminal, execute `ollama pull qwen3:1.7b`.
 5. Abra `INICIAR.bat` e clique em **Conectar**.
 
-A primeira abertura instala as dependências Python em `.venv`. Não exige administrador. O modelo padrão e o contexto reduzido foram escolhidos como ponto inicial para um notebook com i5-1335U e 8 GB de RAM; o desempenho ainda precisa ser medido nesse equipamento.
+A primeira abertura instala as dependências Python em `.venv-py312`. Não exige administrador. O modelo padrão e o contexto reduzido foram escolhidos como ponto inicial para um notebook com i5-1335U e 8 GB de RAM; o desempenho ainda precisa ser medido nesse equipamento.
 
 ## Funcionalidades
 
@@ -50,3 +50,11 @@ Dados pessoais da aplicação ficam em `%LOCALAPPDATA%\Grazi`, fora deste reposi
 | `tests/` | Testes do núcleo e contrato HTTP |
 
 Implementação própria, inspirada na pesquisa de Open-LLM-VTuber e AIRI, sem importar código desses projetos. Dependências e modelos mantêm suas respectivas licenças; consulte o guia.
+
+## Correção de instalação: Python incompatível
+
+O inicializador agora seleciona explicitamente Python 3.12 de 64 bits e usa `.venv-py312`. O ambiente `.venv` antigo permanece intacto, mas não é reutilizado. PySide6 6.8.3 exige Python >=3.9 e <3.14; o comando antigo `py -3` podia escolher Python 3.14 ou posterior.
+
+Instale Python 3.12.10 pelo link indicado (Windows installer 64-bit), mantenha o Launcher e execute a versão atualizada de `INICIAR.bat`. Não precisa desinstalar outro Python. As preferências e conversas em `%LOCALAPPDATA%\Grazi` são preservadas.
+
+`ConnectionResetError 10054` é um problema separado de conexão. O instalador usa tentativas limitadas e timeout maior; se persistir, verifique acesso a PyPI na rede. Não desative verificação TLS.

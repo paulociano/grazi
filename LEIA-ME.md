@@ -5,7 +5,7 @@ Mascote de desktop personalizado para Paulo, inspirado na Grazi real: caramelo r
 ## Instalar e abrir
 
 1. Extraia **toda** esta pasta ZIP antes de executar qualquer arquivo.
-2. Instale **Python 3.12 para Windows, 64 bits** em https://www.python.org/downloads/windows/ . Mantenha o Python Launcher selecionado na instalação.
+2. Instale **Python 3.12 para Windows, 64 bits** em https://www.python.org/downloads/release/python-31210/ . Mantenha o Python Launcher selecionado na instalação.
 3. Instale o Ollama em https://ollama.com/download/windows e abra o aplicativo.
 4. Abra o Terminal do Windows e execute:
 
@@ -13,7 +13,7 @@ Mascote de desktop personalizado para Paulo, inspirado na Grazi real: caramelo r
    ollama pull qwen3:1.7b
    ```
 
-5. Dê dois cliques em **INICIAR.bat**. A primeira abertura baixa o PySide6 e cria um ambiente Python na pasta `.venv`. Pode levar alguns minutos. Não precisa executar como administrador.
+5. Dê dois cliques em **INICIAR.bat**. A primeira abertura baixa o PySide6 e cria um ambiente Python na pasta `.venv-py312`. Pode levar alguns minutos. Não precisa executar como administrador.
 6. Na janela da Grazi, clique em **Conectar**. O aplicativo encontra os modelos locais. Em **Configurar**, você pode trocar o modelo.
 7. Escreva uma mensagem e clique em **Enviar**.
 
@@ -93,3 +93,11 @@ Pesquisa: 28/09/2026.
 Implementação própria; não é um fork nem importa código desses dois projetos de referência. PySide6 6.8.3 é instalado separadamente pelo pip; as licenças de Qt/PySide6 e do modelo escolhido continuam aplicáveis. A imagem da Grazi foi gerada a partir da referência fornecida pelo usuário.
 
 Arsenal aplicado: research-and-synthesize, idea-refine, high-fidelity-image-generation e surgical-engineering.
+
+## Correção de instalação: Python incompatível
+
+O inicializador agora seleciona explicitamente Python 3.12 de 64 bits e usa `.venv-py312`. O ambiente `.venv` antigo permanece intacto, mas não é reutilizado. PySide6 6.8.3 exige Python >=3.9 e <3.14; o comando antigo `py -3` podia escolher Python 3.14 ou posterior.
+
+Instale Python 3.12.10 pelo link indicado (Windows installer 64-bit), mantenha o Launcher e execute a versão atualizada de `INICIAR.bat`. Não precisa desinstalar outro Python. As preferências e conversas em `%LOCALAPPDATA%\Grazi` são preservadas.
+
+`ConnectionResetError 10054` é um problema separado de conexão. O instalador usa tentativas limitadas e timeout maior; se persistir, verifique acesso a PyPI na rede. Não desative verificação TLS.

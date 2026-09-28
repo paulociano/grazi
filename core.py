@@ -1,7 +1,12 @@
 """Grazi's local state and Ollama transport. No command execution from model text."""
 import json
 import os
+import platform
+import re
+import subprocess
 import tempfile
+import webbrowser
+from datetime import datetime
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -104,3 +109,39 @@ def chat(model, memory, history):
     if not answer:
         raise RuntimeError("O modelo não retornou uma resposta. Tente outro modelo em Configurar.")
     return answer
+
+
+def local_command(text):
+    """Handle a small, explicit allowlist of local actions without model-generated code."""
+    value = text.strip().lower()
+    if value in {"que horas são", "que horas sao", "hora", "horas"}:
+        return f"Agora são {datetime.now().strftime('%H:%M')} (horário local do computador)."
+    if value in {"que dia é hoje", "que dia e hoje", "data de hoje", "data"}:
+        return f"Hoje é {datetime.now().strftime('%d/%m/%Y')}."
+    if value in {"abrir calculadora", "abrir a calculadora", "calculadora"}:
+        if os.name != "nt": return "A calculadora do Windows só pode ser aberta no Windows."
+        subprocess.Popen(["calc.exe"], close_fds=True)
+        return "Abri a Calculadora do Windows."
+    if value in {"abrir bloco de notas", "abrir o bloco de notas", "bloco de notas"}:
+        if os.name != "nt": return "O Bloco de Notas só pode ser aberto no Windows."
+        subprocess.Popen(["notepad.exe"], close_fds=True)
+        return "Abri o Bloco de Notas."
+    if value in {"abrir github", "abrir o github"}:
+        webbrowser.open("https://github.com/paulociano/grazi")
+        return "Abri o repositório da Grazi no GitHub."
+    if value in {"status do computador", "informações do sistema", "informacoes do sistema"}:
+        return (f"Sistema: {platform.system()} {platform.release()} · "
+                f"processador: {platform.processor() or 'não informado'}.")
+    match = re.fullmatch(r"(?:calcule|calcular)\s+([0-9+\-*/().,%\s]+)", value)
+    if match:
+        expr = match.group(1).replace(",", ".").replace("%", "/100")
+        if len(expr) > 80 or not re.fullmatch(r"[0-9+\-*/().\s]+", expr):
+            return "Só calculo expressões numéricas simples, como: calcule 12 * 8."
+        try:
+            result = eval(expr, {"__builtins__": {}}, {})
+            if isinstance(result, (int, float)) and result == result and abs(result) < 1e15:
+                return f"O resultado é {result:g}."
+        except (ArithmeticError, SyntaxError, ValueError, TypeError):
+            pass
+        return "Não consegui calcular essa expressão."
+    return None

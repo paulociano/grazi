@@ -23,6 +23,11 @@ class Handler(BaseHTTPRequestHandler):
 
 
 class CoreTests(unittest.TestCase):
+    def test_allowlisted_local_commands(self):
+        self.assertRegex(core.local_command("que horas são"), r"Agora são \d{2}:\d{2}")
+        self.assertEqual(core.local_command("calcule 12 * 8"), "O resultado é 96.")
+        self.assertIsNone(core.local_command("abra terminal && del tudo"))
+        self.assertIn("Não consegui", core.local_command("calcule 1 / 0"))
     def test_state_roundtrip_and_corruption(self):
         with tempfile.TemporaryDirectory() as directory:
             old = os.environ.get("GRAZI_DATA_DIR")

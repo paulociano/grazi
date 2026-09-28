@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QLineEdit, QTextEdit, QComboBox, QCheckBox, QSlider,
     QDialog, QFormLayout, QMenu, QSystemTrayIcon, QMessageBox)
 from PySide6.QtTextToSpeech import QTextToSpeech
-from core import load_state, save_state, list_models, chat
+from core import load_state, save_state, list_models, chat, local_command
 
 ROOT = Path(__file__).resolve().parent
 STYLE = """
@@ -264,8 +264,13 @@ class Controller:
         if not text or self.busy or self.listening: return
         self.stop_voice(); self.busy = True
         self.window.send_button.setEnabled(False); self.window.mic.setEnabled(False)
-        self.window.input.clear(); self.window.line("Você", text); self.set_status("Pensando…")
+        self.window.input.clear(); self.window.line("Você", text)
         self.pending = {"role": "user", "content": text}
+        immediate = local_command(text)
+        if immediate is not None:
+            self.on_answer(immediate, True)
+            return
+        self.set_status("Pensando…")
         model, memory = self.state["model"], self.state["memory"]
         history = self.state["history"] + [self.pending]
         def run():
@@ -322,4 +327,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

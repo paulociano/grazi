@@ -4,6 +4,12 @@ Assistente para a área de trabalho do Windows, inspirada na cachorrinha Grazi: 
 
 <img src="assets/grazi.png" alt="Grazi, cachorrinha caramelo robótica" width="240">
 
+### Pose de descanso
+
+Após o período de inatividade configurado, a Grazi se deita com seu macaquinho de pelúcia e respira suavemente.
+
+<img src="assets/grazi-sleep.png" alt="Grazi deitada ao lado de um macaquinho de pelúcia" width="520">
+
 **Versão 0.8 — balão compacto, ativação por voz e assistência local com arquivos.**
 
 > A Grazi é um protótipo pessoal em evolução. Os comandos de arquivo são explícitos, limitados a uma pasta escolhida e sempre pedem confirmação para operações destrutivas.

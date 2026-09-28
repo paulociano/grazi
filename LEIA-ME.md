@@ -17,6 +17,12 @@ Mascote de desktop personalizado para Paulo, inspirado na Grazi real: caramelo r
 6. No botão direito da Grazi, abra **Abrir conversa completa** e clique em **Conectar**. O aplicativo encontra os modelos locais. Em **Configurar**, você pode trocar o modelo.
 7. Escreva uma mensagem e clique em **Enviar**.
 
+### Instalador executável
+
+Para gerar `Grazi-Setup-v0.9.0.exe` localmente, instale o Inno Setup 6 e execute `BUILD_INSTALLER.bat`. O script cria um ambiente de build, empacota a aplicação com PyInstaller e monta o instalador. No GitHub, o workflow **Windows installer** também pode ser executado manualmente em **Actions**; o resultado aparece como artefato para download.
+
+O instalador instala a aplicação em `Arquivos de Programas\Grazi`, cria atalhos opcionais e não inclui o histórico ou as preferências: esses dados continuam em `%LOCALAPPDATA%\Grazi`. O Ollama e o modelo Qwen continuam sendo instalados separadamente.
+
 Se o Ollama não estiver atendendo, abra-o. Você também pode executar `ollama serve` no Terminal caso ele não esteja iniciado. Um erro de porta em uso normalmente significa que ele já está aberto.
 
 ## Perfil para este notebook

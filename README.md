@@ -18,6 +18,12 @@ Leia [Sobre a Grazi](ABOUT.md) para conhecer o propósito, a arquitetura e as de
 4. Execute `INICIAR.bat`. Ele prepara `.venv-py312` e instala as dependências; essa etapa requer internet.
 5. Converse pelo pequeno balão junto à Grazi. O botão direito abre **Conversa completa**, **Personalizar**, **Ditado**, **Comandos disponíveis** e outras opções.
 
+## Instalador `.exe`
+
+O repositório inclui uma receita de instalador Windows. Para gerar localmente, instale o [Inno Setup 6](https://jrsoftware.org/isinfo.php) e execute `BUILD_INSTALLER.bat` em um Windows com Python 3.12. O instalador será criado em `installer-output\Grazi-Setup-v0.9.0.exe`.
+
+Também é possível abrir **Actions → Windows installer → Run workflow** no GitHub. O artefato `Grazi-Windows-installer` será gerado em um runner Windows, sem incluir o Python separado: o aplicativo empacotado já leva o runtime e as dependências.
+
 Histórico e preferências existentes são preservados em `%LOCALAPPDATA%\Grazi`. Para atualizar, não copie apenas `grazi.py`: os módulos `balloon.py`, `speech.py` e os assets também são necessários.
 
 ## Novidades

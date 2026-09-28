@@ -46,9 +46,12 @@ class Mascot(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setStyleSheet("background: transparent")
         self.setCursor(Qt.CursorShape.OpenHandCursor)
-        self.pix = QPixmap(str(ROOT / "assets/grazi.png"))
+        self.asset_path = ROOT / "assets" / "grazi.png"
+        if not self.asset_path.is_file():
+            raise RuntimeError(f"Arquivo da Grazi não encontrado: {self.asset_path}")
+        self.pix = QPixmap(str(self.asset_path))
         if self.pix.isNull():
-            raise RuntimeError("Arquivo assets/grazi.png não encontrado.")
+            raise RuntimeError(f"Arquivo da Grazi não pôde ser carregado pelo Qt: {self.asset_path}")
         self.phase = 0
         self.status = "Vamos conversar?"
         self.drag = None
@@ -319,3 +322,4 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+

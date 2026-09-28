@@ -13,7 +13,7 @@ Ela usa um modelo local do Ollama — por padrão, Qwen3 1.7B — para conversar
 - **Escopo visível:** ações com arquivos só funcionam dentro da Pasta de trabalho escolhida.
 - **Confirmação humana:** sobrescrever e enviar arquivos à Lixeira exigem confirmação.
 - **Reversibilidade:** exclusão usa a Lixeira; fechamento de aplicativo envia uma solicitação normal para que o programa possa perguntar se deve salvar.
-- **Privacidade configurável:** a ativação por voz usa o reconhecedor local do Windows; a voz Francisca é opcional e online.
+- **Privacidade configurável:** a ativação por voz usa o reconhecedor local do Windows e pode ser desligada; a voz Francisca é opcional e online.
 - **Baixo consumo:** a personagem, o balão e as animações foram dimensionados para um notebook com 8 GB de RAM e gráficos integrados.
 
 ## Como funciona
@@ -30,7 +30,7 @@ Comando explícito? ── sim → ação permitida e confirmação quando neces
 Ollama local → resposta em português → balão e voz opcional
 ```
 
-O reconhecimento da palavra “Grazi” é separado do ditado: primeiro a gramática local procura a palavra de ativação; depois a Grazi inicia uma captura curta para você revisar o pedido. A escuta é pausada enquanto ela fala, pensa ou executa uma ação.
+O reconhecimento da palavra “Grazi” é separado do ditado: por padrão, a gramática local procura a palavra de ativação; depois a Grazi inicia uma captura curta para você revisar o pedido. A escuta é pausada enquanto ela fala, pensa ou executa uma ação. Em instalações antigas, a ativação é migrada para ligada quando ainda não havia uma escolha explícita.
 
 ## Assistência atual
 
@@ -42,7 +42,7 @@ A Pasta de trabalho é escolhida na tela **Personalizar**. Dentro dela, a Grazi 
 - salvar texto fornecido após `|`;
 - salvar a última resposta em um arquivo;
 - enviar um arquivo para a Lixeira após confirmação;
-- abrir Calculadora e Bloco de Notas;
+- abrir Calculadora, Bloco de Notas, Terminal, Explorador, Chrome, Edge, Word, Excel e VS Code quando instalados;
 - solicitar o fechamento de instâncias desses aplicativos que ela própria abriu.
 
 Ela não abre executáveis, não aceita caminhos absolutos ou caminhos que escapem da Pasta de trabalho e não encerra processos à força. Documentos maiores ou formatos não textuais devem ser abertos no aplicativo apropriado.

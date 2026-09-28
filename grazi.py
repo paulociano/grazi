@@ -32,6 +32,24 @@ QMenu::item:selected { background: #414653; }
 """
 
 
+def pose_parameters(phase, motion, listening, thinking, speaking):
+    """Small state-based motion that stays cheap on integrated graphics."""
+    if not motion:
+        return {"angle": 0.0, "scale": 1.0, "indicator": None, "pulse": 0.0}
+    wave = math.sin(phase)
+    if listening:
+        return {"angle": wave * 2.0, "scale": 1.012 + wave * .004,
+                "indicator": "#edb273", "pulse": (wave + 1) * 2.0}
+    if thinking:
+        return {"angle": wave * .8, "scale": 1.006 + wave * .003,
+                "indicator": "#65c7d9", "pulse": (wave + 1) * 2.0}
+    if speaking:
+        return {"angle": wave * 1.0, "scale": 1.01 + wave * .004,
+                "indicator": "#ef729b", "pulse": (wave + 1) * 2.5}
+    return {"angle": wave * .45, "scale": 1.0 + wave * .002,
+            "indicator": None, "pulse": 0.0}
+
+
 class Events(QObject):
     answer = Signal(str, bool)
     models = Signal(list, str)
@@ -82,7 +100,22 @@ class Mascot(QWidget):
         area = QRectF(9, 42 + bob, self.width()-18, self.height()-51)
         fitted = self.pix.size().scaled(area.size().toSize(), Qt.AspectRatioMode.KeepAspectRatio)
         rect = QRectF(area.x()+(area.width()-fitted.width())/2, area.y(), fitted.width(), fitted.height())
+        pose = pose_parameters(self.phase, self.c.state["motion"], self.c.listening,
+                               self.c.busy, self.c.tts.state() == QTextToSpeech.State.Speaking)
+        if pose["indicator"]:
+            glow = 9 + pose["pulse"]
+            p.setPen(Qt.PenStyle.NoPen)
+            p.setBrush(QColor(pose["indicator"]))
+            p.setOpacity(.10)
+            p.drawEllipse(rect.adjusted(-glow, -glow, glow, glow))
+            p.setOpacity(1.0)
+        p.save()
+        p.translate(rect.center().x(), rect.bottom())
+        p.rotate(pose["angle"])
+        p.scale(pose["scale"], pose["scale"])
+        p.translate(-rect.center().x(), -rect.bottom())
         p.drawPixmap(rect, self.pix, QRectF(self.pix.rect()))
+        p.restore()
         p.end()
 
     def mousePressEvent(self, event):

@@ -54,7 +54,7 @@ Se o reconhecedor local não estiver disponível, use o campo de texto com **Win
 
 ## O que está incluído e o que ainda falta
 
-Incluído: janela transparente flutuante, arrastar, menu e bandeja, movimento suave do corpo inteiro, chat com Ollama, escolha de modelos locais, memória editável, histórico local, síntese de voz, ponte para ditado local Windows e ações locais explícitas para hora/data, cálculos, Calculadora, Bloco de Notas, status do sistema e GitHub.
+Incluído: janela transparente flutuante, arrastar, menu e bandeja, flutuação em repouso, inclinação/brilho ao ouvir, pulsação ao processar, brilho rosa ao falar, chat com Ollama, escolha de modelos locais, memória editável, histórico local, síntese de voz, ponte para ditado local Windows e ações locais explícitas para hora/data, cálculos, Calculadora, Bloco de Notas, status do sistema e GitHub.
 
 As ações locais não executam texto arbitrário. Elas são reconhecidas por uma lista fixa de comandos; a resposta do Qwen não pode iniciar processos nem montar comandos. Exemplos: `que horas são`, `que dia é hoje`, `calcule 12 * 8`, `abrir calculadora`, `abrir bloco de notas`, `status do computador` e `abrir github`.
 

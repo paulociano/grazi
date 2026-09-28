@@ -24,6 +24,7 @@ A primeira abertura instala as dependências Python em `.venv`. Não exige admin
 - Leitura por voz do Windows e ditado mediante reconhecedor pt-BR instalado.
 - Controles de tamanho, movimento e voz, além de menu na bandeja.
 - Ações locais explícitas: hora, data, cálculos simples, Calculadora, Bloco de Notas, status do sistema e GitHub.
+- Animações de estado: flutuação em repouso, inclinação e brilho ao ouvir, pulsação ao processar e brilho rosa ao falar.
 
 ## Limitações atuais
 

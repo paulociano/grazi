@@ -4,7 +4,11 @@ Assistente para a área de trabalho do Windows, inspirada na cachorrinha Grazi: 
 
 <img src="assets/grazi.png" alt="Grazi, cachorrinha caramelo robótica" width="240">
 
-**Protótipo 0.8 — balão compacto, ativação por voz e primeiros comandos de assistência.**
+**Versão 0.8 — balão compacto, ativação por voz e assistência local com arquivos.**
+
+> A Grazi é um protótipo pessoal em evolução. Os comandos de arquivo são explícitos, limitados a uma pasta escolhida e sempre pedem confirmação para operações destrutivas.
+
+Leia [Sobre a Grazi](ABOUT.md) para conhecer o propósito, a arquitetura e as decisões de privacidade do projeto.
 
 ## Começar ou atualizar
 
@@ -12,7 +16,7 @@ Assistente para a área de trabalho do Windows, inspirada na cachorrinha Grazi: 
 2. Instale Python **3.12 de 64 bits**, com Python Launcher.
 3. Instale e abra [Ollama](https://ollama.com/download/windows). No Terminal: `ollama pull qwen3:1.7b`.
 4. Execute `INICIAR.bat`. Ele prepara `.venv-py312` e instala as dependências; essa etapa requer internet.
-5. Converse pelo pequeno balão junto à Grazi. O botão direito abre **Conversa completa**, **Personalizar**, **Ditado** e outras opções.
+5. Converse pelo pequeno balão junto à Grazi. O botão direito abre **Conversa completa**, **Personalizar**, **Ditado**, **Comandos disponíveis** e outras opções.
 
 Histórico e preferências existentes são preservados em `%LOCALAPPDATA%\Grazi`. Para atualizar, não copie apenas `grazi.py`: os módulos `balloon.py`, `speech.py` e os assets também são necessários.
 
@@ -37,11 +41,19 @@ Histórico e preferências existentes são preservados em `%LOCALAPPDATA%\Grazi`
 
 **A voz online envia o texto falado ao serviço da Microsoft e precisa de internet.** Ela é opcional; a voz instalada no Windows continua sendo o padrão. O serviço pode falhar ou mudar. A síntese ocorre por trechos, podendo haver uma pequena pausa entre eles. Não há clonagem de voz nem promessa de idade percebida.
 
+## Comandos de assistência
+
+Depois de escolher a **Pasta de trabalho** em Personalizar, a Grazi entende comandos explícitos como:
+
+`listar arquivos` · `abrir pasta` · `abrir arquivo contrato.pdf` · `ler arquivo notas.txt` · `salvar arquivo notas.txt | conteúdo` · `salvar resposta em resposta.txt` · `excluir arquivo notas.txt` · `abrir calculadora` · `fechar calculadora`.
+
+O comando de fechar apenas solicita o fechamento de instâncias abertas pela Grazi; ele não força o encerramento de processos nem interfere em aplicativos que você abriu separadamente.
+
 ## Recursos existentes
 
 Chat com Ollama, escolha de modelos locais, memória editável, histórico local, tamanho ajustável, bandeja e ditado Windows mediante reconhecedor pt-BR instalado. Não há escuta contínua.
 
-Comandos explícitos: `que horas são`, `que dia é hoje`, `calcule 12 * 8`, `abrir calculadora`, `abrir bloco de notas`, `status do computador` e `abrir github`. O texto gerado pelo modelo nunca é executado como comando de sistema.
+Comandos locais adicionais: `que horas são`, `que dia é hoje`, `calcule 12 * 8`, `status do computador` e `abrir github`. O texto gerado pelo modelo nunca é executado como comando de sistema.
 
 O perfil inicial usa Qwen3 1.7B, contexto de 2.048 tokens e respostas de até 400 tokens. O desempenho deve ser medido no notebook de 8 GB; não foi presumida aceleração pela GPU Intel.
 
@@ -56,7 +68,7 @@ A [lista oficial do Kokoro](https://huggingface.co/hexgrad/Kokoro-82M/blob/main/
 
 ## Verificação e limites
 
-20 testes passaram: núcleo/Ollama simulado e interface Qt offscreen, incluindo abertura compacta, envio, paginação, bordas de tela e cancelamento de áudio atrasado. Assets carregados pelo Qt e quadros inspecionados visualmente.
+Os testes cobrem núcleo/Ollama simulado, assistência de arquivos, persistência, escopo da pasta, confirmações e interface Qt offscreen, incluindo abertura compacta, envio, paginação, bordas de tela e cancelamento de áudio atrasado. Assets foram carregados pelo Qt e quadros inspecionados visualmente.
 
 A tentativa de consultar vozes online neste ambiente falhou na validação TLS; **áudio real e execução nativa no Windows ainda precisam de teste no computador final**. Não foram desativadas verificações de certificado. Há tratamento de falhas com orientação no balão e preservação da resposta na conversa completa.
 
@@ -72,6 +84,9 @@ Não inclui instalador `.exe`, leitura de tela, agenda, navegação geral, execu
 | `balloon.py` | Balão ancorado e páginas de resposta |
 | `speech.py` | Voz Windows/Edge, reprodução e cancelamento |
 | `core.py` | Estado local, comandos explícitos e Ollama |
+| `assistance.py` | Arquivos, Lixeira e aplicativos permitidos |
+| `wake.py` / `wake_word.ps1` | Ativação local ao ouvir “Grazi” |
+| `ABOUT.md` | Visão geral e decisões do projeto |
 | `assets/grazi-expressions.png` | Atlas de quatro expressões |
 | `idle.py` | Temporizador de inatividade da Grazi |
 | `assets/grazi-sleep.png` | Repouso com macaquinho de pelúcia |

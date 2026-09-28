@@ -1,0 +1,1 @@
+Verificado em 28/09/2026: 3 testes unitarios passaram. Fluxo de UI com servidor HTTP simulado passou: lista de modelos, conversa em dois turnos, controles, preferencias e persistencia. Render Qt offscreen inspecionado. Windows nativo, audio e modelo Qwen real ainda nao testados.

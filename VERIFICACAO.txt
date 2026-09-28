@@ -1,6 +1,6 @@
-Grazi 0.6 — verificação
+Grazi 0.8 — verificação
 
-16 testes unittest aprovados em Linux/Qt offscreen:
+25 testes unittest aprovados em Linux/Qt offscreen:
 - Núcleo: comandos explícitos, persistência/corrupção, contrato HTTP simulado,
   filtragem de modelos cloud e falha de conexão.
 - Desktop: inicia com balão e janela grande oculta; envio e histórico;
@@ -9,6 +9,9 @@ Grazi 0.6 — verificação
   cancelamento rejeita áudio atrasado e remove arquivo;
   erro de voz volta ao repouso; seleção de voz persiste;
   texto exibido literalmente e páginas limitadas.
+- Assistência: listagem/leitura/abertura restritas à pasta; salvamento UTF-8,
+  confirmação de sobrescrita; exclusão via callback da Lixeira com confirmação;
+  salvar última resposta; bloqueio de executável e comandos desconhecidos.
 
 Atlas de expressões e imagem alternativa carregados pelo Qt e inspecionados.
 PNG publicado deve corresponder ao SHA do blob local; publicação verifica isso.
@@ -20,3 +23,5 @@ Ouvindo/pensando/falando são estados da aplicação; boca não faz lip-sync fon
 A voz online é opcional, requer internet e envia o texto da fala à Microsoft.
 
 Repouso: limite de 60 segundos, despertar por tecla e suspensão enquanto ocupada testados. Pose deitada renderizada sobre fundo sólido para verificar alpha.
+
+0.8: interface menor, configurações de pasta e ativação por voz, além de comandos de assistência com confirmação e escopo restrito. A ativação por voz e o fechamento nativo de janelas ainda precisam de validação no Windows final.

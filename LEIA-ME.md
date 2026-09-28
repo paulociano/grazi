@@ -1,4 +1,4 @@
-# Grazi • protótipo Windows 0.6
+# Grazi • protótipo Windows 0.8
 
 Mascote de desktop personalizado para Paulo, inspirado na Grazi real: caramelo robotizada, coleira rosa e orelhas relaxadas.
 
@@ -34,7 +34,21 @@ Configuração informada: Intel Core i5-1335U, 8 GB de RAM (7,70 GB utilizáveis
 
 ## Repouso automático
 
-Depois de mais de 1 minuto sem interação com a Grazi, ela troca suavemente para a pose deitada junto ao macaquinho de pelúcia, com movimento de respiração. O balão se recolhe. Cliques, arrastar, teclas e novos pedidos a acordam. O contador fica suspenso durante ditado, processamento, conexão e preparação/reprodução de voz. Isso mede interação com a Grazi, sem monitorar teclado ou mouse de outros aplicativos. Com movimentos desativados, a pose deitada permanece estática.
+Por padrão, depois de mais de 1 minuto sem interação com a Grazi, ela troca suavemente para a pose deitada junto ao macaquinho de pelúcia, com movimento de respiração. O balão se recolhe. Cliques, arrastar, teclas e novos pedidos a acordam. O contador fica suspenso durante ditado, processamento, conexão e preparação/reprodução de voz. Isso mede interação com a Grazi, sem monitorar teclado ou mouse de outros aplicativos. Com movimentos desativados, a pose deitada permanece estática.
+
+Em **Personalizar**, você pode desligar o repouso automático ou ajustar o tempo entre 1 e 30 minutos. **Descansar agora** funciona também com repouso automático desligado; **Acordar** reabre o balão. A Grazi não interrompe uma resposta ou ditado em andamento para descansar.
+
+## Ativação por voz
+
+Em **Personalizar**, marque **Ativar ao ouvir “Grazi”**. A Grazi usa o reconhecedor `System.Speech` local do Windows, com uma gramática que escuta somente a palavra de ativação. Ao ouvir “Grazi”, o reconhecimento de ditado é iniciado para você falar e revisar o pedido. A escuta pausa enquanto ela processa ou fala e não usa gravação contínua na nuvem. É necessário instalar um reconhecedor de fala **Português (Brasil)** no Windows; se ele não existir, a opção se desliga e o balão explica o problema.
+
+## Arquivos e aplicativos
+
+Escolha uma **Pasta de trabalho** em Personalizar. Os comandos são deliberadamente explícitos:
+
+`listar arquivos`, `abrir pasta`, `abrir arquivo nome.pdf`, `ler arquivo notas.txt`, `salvar arquivo notas.txt | conteúdo`, `salvar resposta em resposta.txt`, `excluir arquivo notas.txt`, `abrir calculadora`, `abrir bloco de notas`, `fechar calculadora` e `fechar bloco de notas`.
+
+O caminho é sempre relativo à pasta escolhida. A Grazi não abre `.exe`, não aceita caminhos fora da pasta, não executa texto produzido pelo Qwen e não apaga diretamente: exclusões vão para a Lixeira e pedem confirmação. Salvamentos substituindo arquivo também pedem confirmação e usam arquivo temporário antes de trocar o destino. O fechamento envia uma solicitação normal ao aplicativo, permitindo que ele pergunte se deve salvar; não há encerramento forçado.
 
 ## Controles
 
@@ -46,6 +60,8 @@ Depois de mais de 1 minuto sem interação com a Grazi, ela troca suavemente par
 | Abrir opções ou sair | Botão direito no mascote ou ícone na bandeja |
 | Trocar modelo, tamanho, memória, voz | Configurar |
 | Apagar conversa | Limpar; confirma antes de apagar |
+| Repetir última resposta | Ouvir no balão ou Ouvir última resposta no menu; usa a voz selecionada mesmo com leitura automática desligada |
+| Ativar por voz | Personalizar → Ativar ao ouvir “Grazi”; botão direito → Desativar ativação por voz |
 | Parar leitura | Parar voz |
 | Fechar conversa | X da janela; Grazi permanece disponível |
 
@@ -81,7 +97,7 @@ O chat com o modelo envia as mensagens para `http://127.0.0.1:11434`; não aceit
 
 ## Verificação realizada
 
-Testes de persistência/corrupção de dados, contrato HTTP com servidor simulado, falha de conexão e bloqueio de nomes cloud. Interface renderizada e fluxo de chat exercitado em Linux com Qt offscreen. Os 16 testes incluem balão, paginação, bordas de tela, preferências de voz e descarte de áudio atrasado. A consulta ao serviço Edge falhou por certificado TLS neste ambiente; áudio real não foi validado. **Sem execução nativa no Windows, sem teste de áudio e sem benchmark real do Qwen neste notebook.** O servidor simulado verifica a integração, não a qualidade do modelo.
+Testes de persistência/corrupção de dados, contrato HTTP com servidor simulado, falha de conexão e bloqueio de nomes cloud. Interface renderizada e fluxo de chat exercitado em Linux com Qt offscreen. Os 20 testes incluem balão, paginação, bordas de tela, preferências de voz e descarte de áudio atrasado. A consulta ao serviço Edge falhou por certificado TLS neste ambiente; áudio real não foi validado. **Sem execução nativa no Windows, sem teste de áudio e sem benchmark real do Qwen neste notebook.** O servidor simulado verifica a integração, não a qualidade do modelo.
 
 ## Próxima evolução
 
@@ -107,4 +123,3 @@ Pesquisa: 28/09/2026.
 Implementação própria; não é um fork nem importa código desses dois projetos de referência. PySide6 6.8.3 é instalado separadamente pelo pip; as licenças de Qt/PySide6 e do modelo escolhido continuam aplicáveis. A imagem da Grazi foi gerada a partir da referência fornecida pelo usuário.
 
 Arsenal aplicado: research-and-synthesize, idea-refine, high-fidelity-image-generation e surgical-engineering.
-

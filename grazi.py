@@ -10,7 +10,9 @@ from PySide6.QtCore import Qt, QTimer, Signal, QObject, QPoint, QRectF, QEvent
 from PySide6.QtGui import QColor, QPainter, QPixmap, QIcon, QAction, QFont
 from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QLineEdit, QTextEdit, QComboBox, QCheckBox, QSlider,
-    QDialog, QFormLayout, QMenu, QSystemTrayIcon, QMessageBox)
+    QDialog, QFormLayout, QSpinBox, QFileDialog, QScrollArea, QMenu, QSystemTrayIcon, QMessageBox)
+from assistance import AssistantActions
+from wake import WakeListener
 from idle import IdleState
 from speech import Speech
 from balloon import SpeechBalloon
@@ -104,9 +106,10 @@ class Mascot(QWidget):
         self.setFixedSize(size, int(size * 1.23) + 48)
 
     def tick(self):
+        self.c.sync_wake()
         self.phase += .07
         was_sleeping = self.c.idle.sleeping
-        sleeping = self.c.idle.update(self.c.busy or self.c.listening or self.c.connecting or self.c.speech.active or self.drag is not None)
+        sleeping = self.c.idle.update(self.c.busy or self.c.listening or self.c.connecting or self.c.speech.active or self.drag is not None, enabled=self.c.state["auto_sleep"])
         if sleeping and not was_sleeping:
             self.c.balloon.hide()
         target = 1.0 if sleeping and not self.sleep_pix.isNull() else 0.0
@@ -200,7 +203,10 @@ class Settings(QDialog):
         self.c = c
         self.setWindowTitle("Personalizar a Grazi")
         self.resize(470, 500)
-        layout = QFormLayout(self)
+        outer = QVBoxLayout(self)
+        scroll = QScrollArea(); scroll.setWidgetResizable(True)
+        content = QWidget(); layout = QFormLayout(content)
+        scroll.setWidget(content); outer.addWidget(scroll)
         self.model = QComboBox(); self.model.setEditable(True)
         self.model.addItems(c.available_models or [c.state["model"]])
         self.model.setCurrentText(c.state["model"])
@@ -218,9 +224,25 @@ class Settings(QDialog):
         privacy.setWordWrap(True); privacy.setObjectName("sub"); layout.addRow(privacy)
         test = QPushButton("Ouvir amostra da voz selecionada")
         test.clicked.connect(self.test_voice); layout.addRow(test)
+        self.wake_word = QCheckBox('Ativar ao ouvir “Grazi” (microfone local)')
+        self.wake_word.setChecked(c.state['wake_word']); layout.addRow(self.wake_word)
+        wake_note = QLabel('Mantém o microfone em escuta enquanto a Grazi está livre. Diga Grazi, espere “Ouvindo” e fale. O texto reconhecido fica para revisar e enviar. Exige reconhecedor local pt-BR do Windows.')
+        wake_note.setWordWrap(True); wake_note.setObjectName('sub'); layout.addRow(wake_note)
+        self.file_root = QLineEdit(c.state['file_root']); self.file_root.setReadOnly(True)
+        self.file_root.setPlaceholderText('Escolha a pasta para trabalhar com arquivos')
+        folder_row = QHBoxLayout(); folder_row.addWidget(self.file_root)
+        choose = QPushButton('Escolher'); choose.clicked.connect(self.choose_folder); folder_row.addWidget(choose)
+        layout.addRow('Pasta de trabalho', folder_row)
         self.motion = QCheckBox("Movimento suave do mascote")
         self.motion.setChecked(c.state["motion"]); layout.addRow(self.motion)
-        self.size = QSlider(Qt.Orientation.Horizontal); self.size.setRange(200, 460)
+        self.auto_sleep = QCheckBox("Descansar automaticamente com o macaquinho")
+        self.auto_sleep.setChecked(c.state["auto_sleep"]); layout.addRow(self.auto_sleep)
+        self.sleep_minutes = QSpinBox(); self.sleep_minutes.setRange(1, 30)
+        self.sleep_minutes.setSuffix(" min"); self.sleep_minutes.setValue(c.state["sleep_minutes"])
+        self.sleep_minutes.setEnabled(self.auto_sleep.isChecked())
+        self.auto_sleep.toggled.connect(self.sleep_minutes.setEnabled)
+        layout.addRow("Tempo sem interação", self.sleep_minutes)
+        self.size = QSlider(Qt.Orientation.Horizontal); self.size.setRange(120, 460)
         self.size.setValue(c.state["size"]); layout.addRow("Tamanho", self.size)
         self.memory = QTextEdit(); self.memory.setPlainText(c.state["memory"])
         self.memory.setPlaceholderText("Preferências que a Grazi deve lembrar")
@@ -230,7 +252,12 @@ class Settings(QDialog):
         button = QPushButton("Salvar"); button.setObjectName("primary")
         button.clicked.connect(self.save); layout.addRow(button)
 
+    def choose_folder(self):
+        path = QFileDialog.getExistingDirectory(self, 'Pasta de trabalho da Grazi', self.file_root.text() or str(Path.home()))
+        if path: self.file_root.setText(path)
+
     def test_voice(self):
+        self.c.wake.stop()
         self.c.stop_voice()
         text = "Oi, Paulo! Eu sou a Grazi. Estou aqui para ajudar você."
         self.c.balloon.message(text)
@@ -242,10 +269,14 @@ class Settings(QDialog):
             QMessageBox.warning(self, "Modelo local", "Informe o nome de um modelo local do Ollama.")
             return
         self.c.state.update(model=model, voice=self.voice.isChecked(), voice_engine=self.engine.currentData(), motion=self.motion.isChecked(),
+            wake_word=self.wake_word.isChecked(), file_root=self.file_root.text(),
+            auto_sleep=self.auto_sleep.isChecked(), sleep_minutes=self.sleep_minutes.value(),
             size=self.size.value(), memory=self.memory.toPlainText()[:8000])
+        self.c.idle.timeout = self.c.state["sleep_minutes"] * 60
+        self.c.touch()
         self.c.pet.resize_pet(); self.c.pet.update(); self.c.place_pet()
         self.c.stop_voice(); self.c.balloon.reanchor()
-        self.c.persist(); self.c.update_label(); self.accept()
+        self.c.persist(); self.c.update_label(); self.c.sync_wake(); self.accept()
 
 
 class ChatWindow(QWidget):
@@ -283,11 +314,16 @@ class ChatWindow(QWidget):
 class Controller:
     def __init__(self, app):
         self.app = app; self.state = load_state(); self.available_models = []
-        self.idle = IdleState()
+        self.idle = IdleState(timeout=self.state["sleep_minutes"] * 60)
         self.speaking = False
         self.busy = False; self.listening = False; self.connecting = False
         self.events = Events(); self.events.answer.connect(self.on_answer)
         self.events.models.connect(self.on_models); self.events.heard.connect(self.on_heard)
+        self.wake = WakeListener(app)
+        self.next_wake = time.monotonic() + 2
+        self.wake.detected.connect(self.on_wake)
+        self.wake.failed.connect(self.wake_error)
+        self.actions = AssistantActions(self.state, self.confirm_action)
         self.speech = Speech(app)
         self.window = ChatWindow(self)
         self.pet = Mascot(self)
@@ -298,6 +334,7 @@ class Controller:
         self.speech.page.connect(self.balloon.select_page)
         self.speech.error.connect(self.voice_error)
         app.aboutToQuit.connect(self.stop_voice)
+        app.aboutToQuit.connect(self.wake.stop)
         self.tray = QSystemTrayIcon(QIcon(str(ROOT / "assets/grazi.png")), app)
         self.tray.setToolTip("Grazi • duplo clique para conversar")
         self.tray.setContextMenu(self.menu())
@@ -318,7 +355,35 @@ class Controller:
         except OSError:
             self.window.status.setText("Não consegui salvar as preferências. Verifique a permissão da pasta de dados.")
 
+    def confirm_action(self, title, description):
+        self.wake.stop()
+        return QMessageBox.question(self.balloon, title, description,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes
+
+    def sync_wake(self):
+        allowed = (self.state['wake_word'] and not (self.busy or self.listening or self.speech.active)
+                   and self.app.activeModalWidget() is None and time.monotonic() >= self.next_wake)
+        if allowed:
+            self.wake.start()
+        elif self.wake.running:
+            self.wake.stop()
+
+    def disable_wake(self):
+        self.state['wake_word'] = False; self.wake.stop(); self.persist(); self.update_label()
+
+    def wake_error(self, text):
+        self.disable_wake()
+        self.window.line('Microfone', text); self.balloon.message(text)
+
+    def on_wake(self):
+        if not self.state['wake_word'] or self.busy or self.listening or self.speech.active:
+            return
+        self.show_balloon()
+        self.listen()
+
     def update_label(self):
+        self.tray.setToolTip("Grazi • microfone de ativação " + ("habilitado" if self.state["wake_word"] else "desligado"))
         self.window.status.setText(f"IA local · {self.state['model']} · Ollama em 127.0.0.1:11434")
 
     def place_pet(self):
@@ -333,11 +398,36 @@ class Controller:
 
     def menu(self):
         menu = QMenu()
-        for title, callback in [("Abrir balão", self.show_balloon), ("Abrir conversa completa", self.show_chat), ("Ditado", self.listen), ("Parar voz", self.stop_voice), ("Personalizar", self.settings),
+        for title, callback in [("Abrir balão", self.show_balloon), ("Abrir conversa completa", self.show_chat), ("Ditado", self.listen), ("Parar voz", self.stop_voice), ("Ouvir última resposta", self.replay_answer), ("Descansar agora", self.rest_now), ("Acordar", self.show_balloon), ("Desativar ativação por voz", self.disable_wake), ("Comandos disponíveis", self.show_help), ("Personalizar", self.settings),
                                 ("Mostrar Grazi", self.show_pet), ("Ocultar Grazi", self.hide_pet),
                                 ("Sair", self.app.quit)]:
             action = QAction(title, menu); action.triggered.connect(callback); menu.addAction(action)
         return menu
+
+    def show_help(self):
+        self.show_balloon(); self.balloon.message(self.actions.execute('ajuda'))
+
+    def rest_now(self):
+        if self.busy or self.listening or self.connecting:
+            return
+        self.stop_voice()
+        self.idle.sleeping = True
+        self.balloon.hide()
+        self.pet.show(); self.pet.tick()
+
+    def replay_answer(self):
+        if self.busy or self.listening:
+            return
+        self.stop_voice()
+        text = next((m["content"] for m in reversed(self.state["history"])
+                     if m["role"] == "assistant"), None)
+        self.show_balloon()
+        if text is None:
+            self.balloon.message("Ainda não tenho uma resposta para repetir. Envie uma mensagem primeiro.")
+            return
+        self.balloon.message(text)
+        self.wake.stop()
+        self.speech.say(text, self.state["voice_engine"])
 
     def show_pet(self): self.touch(); self.pet.show()
     def show_balloon(self):
@@ -358,6 +448,7 @@ class Controller:
     def set_status(self, text): self.pet.status = text; self.pet.update()
     def stop_voice(self): self.speech.stop()
     def voice_state(self, state):
+        self.next_wake = time.monotonic() + 2
         self.touch()
         self.speaking = state
         if state: self.set_status("Falando com você")
@@ -387,6 +478,7 @@ class Controller:
     def send(self):
         text = self.window.input.text().strip()
         if not text or self.busy or self.listening: return
+        self.wake.stop()
         self.touch(); self.stop_voice(); self.busy = True
         self.window.send_button.setEnabled(False); self.window.mic.setEnabled(False)
         self.balloon.input.clear(); self.balloon.send_button.setEnabled(False)
@@ -394,7 +486,10 @@ class Controller:
         self.window.input.clear(); self.window.line("Você", text)
         self.pending = {"role": "user", "content": text}
         try:
-            immediate = local_command(text)
+            last_answer = next((m['content'] for m in reversed(self.state['history']) if m['role'] == 'assistant'), '')
+            immediate = self.actions.execute(text, last_answer)
+            if immediate is None:
+                immediate = local_command(text)
         except Exception as exc:
             self.on_answer(f"Não consegui executar esse comando: {exc}", False)
             return
@@ -418,6 +513,7 @@ class Controller:
             self.state["history"] = (self.state["history"] + [self.pending, {"role": "assistant", "content": text}])[-40:]
             self.persist()
             if self.state["voice"]:
+                self.wake.stop()
                 self.speech.say(text, self.state["voice_engine"])
         else:
             self.window.input.setText(self.pending["content"])
@@ -425,6 +521,7 @@ class Controller:
 
     def listen(self):
         if self.busy or self.listening: return
+        self.wake.stop()
         self.touch(); self.stop_voice()
         if sys.platform != "win32":
             self.window.line("Ditado", "O ditado desta versão usa o reconhecimento instalado no Windows."); return
@@ -467,4 +564,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

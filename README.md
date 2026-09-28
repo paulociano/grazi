@@ -4,7 +4,7 @@ Assistente para a área de trabalho do Windows, inspirada na cachorrinha Grazi: 
 
 <img src="assets/grazi.png" alt="Grazi, cachorrinha caramelo robótica" width="240">
 
-**Protótipo 0.6 — balão de conversa, expressões e voz feminina online opcional.**
+**Protótipo 0.8 — balão compacto, ativação por voz e primeiros comandos de assistência.**
 
 ## Começar ou atualizar
 
@@ -18,7 +18,16 @@ Histórico e preferências existentes são preservados em `%LOCALAPPDATA%\Grazi`
 
 ## Novidades
 
-- Após mais de 60 segundos sem interação com a Grazi, ela se deita com um macaquinho de pelúcia e respira suavemente. Clicar, arrastar ou digitar acorda a personagem. O tempo não conta enquanto ela processa, ouve ou prepara/reproduz fala. O balão se recolhe durante o repouso.
+- Interface menor: Grazi inicia em 170 px e o balão em 270 px; o tamanho da personagem pode ser ajustado em Personalizar.
+- Ativação opcional ao ouvir “Grazi”, usando o reconhecedor local pt-BR do Windows. A escuta pausa enquanto ela fala e desliga se o reconhecedor não estiver disponível.
+- Pasta de trabalho escolhida em Personalizar. Comandos explícitos para listar, abrir e ler arquivos, salvar texto/respostas, enviar arquivos à Lixeira, abrir Calculadora/Bloco de Notas e solicitar o fechamento de instâncias abertas pela Grazi.
+- Arquivos são restritos à pasta escolhida; executáveis não são abertos. Sobrescrita e exclusão exigem confirmação. Fechamento usa WM_CLOSE e preserva pedidos de salvamento do aplicativo.
+
+- **Personalizar → Repouso:** ative/desative e ajuste de 1 a 30 minutos; padrão de 1 minuto preservado.
+- **Botão direito → Descansar agora / Acordar:** controle manual da pose. Descansar aguarda o fim de uma resposta ou ditado em andamento.
+- **Ouvir**, no balão ou menu: repete a última resposta usando a voz selecionada, mesmo com leitura automática desligada. Não chama o Ollama nem duplica o histórico. Se Francisca estiver selecionada, o texto é enviado novamente ao serviço online.
+
+- Por padrão, após mais de 60 segundos sem interação com a Grazi, ela se deita com um macaquinho de pelúcia e respira suavemente. Clicar, arrastar ou digitar acorda a personagem. O tempo não conta enquanto ela processa, ouve ou prepara/reproduz fala. O balão se recolhe durante o repouso.
 
 - A janela grande deixa de abrir automaticamente. O balão acompanha o mascote ao arrastar e muda de lado perto da borda.
 - Respostas longas são divididas em páginas. Durante a leitura, cada trecho aparece no balão; as setas permitem reler e interrompem a voz.
@@ -47,7 +56,7 @@ A [lista oficial do Kokoro](https://huggingface.co/hexgrad/Kokoro-82M/blob/main/
 
 ## Verificação e limites
 
-16 testes passaram: núcleo/Ollama simulado e interface Qt offscreen, incluindo abertura compacta, envio, paginação, bordas de tela e cancelamento de áudio atrasado. Assets carregados pelo Qt e quadros inspecionados visualmente.
+20 testes passaram: núcleo/Ollama simulado e interface Qt offscreen, incluindo abertura compacta, envio, paginação, bordas de tela e cancelamento de áudio atrasado. Assets carregados pelo Qt e quadros inspecionados visualmente.
 
 A tentativa de consultar vozes online neste ambiente falhou na validação TLS; **áudio real e execução nativa no Windows ainda precisam de teste no computador final**. Não foram desativadas verificações de certificado. Há tratamento de falhas com orientação no balão e preservação da resposta na conversa completa.
 

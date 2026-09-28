@@ -15,10 +15,10 @@ class SpeechBalloon(QWidget):
         self.tip_y = 75
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setFixedSize(340, 246)
+        self.setFixedSize(270, 196)
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(24, 14, 24, 14)
-        layout.setSpacing(6)
+        layout.setContentsMargins(19, 10, 19, 10)
+        layout.setSpacing(4)
         heading = QHBoxLayout()
         title = QLabel('Grazi'); title.setStyleSheet('color: #edb273; font-weight: bold; background: transparent')
         heading.addWidget(title); heading.addStretch()
@@ -31,10 +31,12 @@ class SpeechBalloon(QWidget):
         layout.addWidget(self.label, 1)
         nav = QHBoxLayout()
         for title, delta in [('‹', -1), ('›', 1)]:
-            button = QPushButton(title); button.setFixedSize(28, 26)
+            button = QPushButton(title); button.setFixedSize(24, 24)
             button.clicked.connect(lambda checked=False, d=delta: self.navigate(d)); nav.addWidget(button)
         self.counter = QLabel(); self.counter.setStyleSheet('background: transparent; font-size: 11px')
         nav.addWidget(self.counter); nav.addStretch()
+        replay = QPushButton("Ouvir"); replay.setToolTip("Ouvir a última resposta com a voz selecionada")
+        replay.clicked.connect(controller.replay_answer); nav.addWidget(replay)
         stop = QPushButton('Parar'); stop.clicked.connect(controller.stop_voice); nav.addWidget(stop)
         more = QPushButton('⋯'); more.setToolTip('Conversa completa'); more.clicked.connect(controller.show_chat)
         nav.addWidget(more); layout.addLayout(nav)
@@ -43,7 +45,7 @@ class SpeechBalloon(QWidget):
         self.input.returnPressed.connect(self.send); row.addWidget(self.input)
         self.send_button = QPushButton('↑'); self.send_button.setToolTip('Enviar'); self.send_button.clicked.connect(self.send)
         row.addWidget(self.send_button); layout.addLayout(row)
-        self.setStyleSheet('QPushButton { padding: 3px 8px; } QLineEdit { padding: 6px; }')
+        self.setStyleSheet('QPushButton { padding: 3px 5px; } QLineEdit { padding: 6px; }')
         self.select_page(0)
 
     def send(self):

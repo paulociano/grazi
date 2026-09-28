@@ -12,7 +12,7 @@ import urllib.request
 from pathlib import Path
 
 OLLAMA = "http://127.0.0.1:11434"
-DEFAULT = {"model": "qwen3:1.7b", "voice": False, "voice_engine": "windows", "motion": True, "size": 300,
+DEFAULT = {"model": "qwen3:1.7b", "voice": False, "voice_engine": "windows", "motion": True, "auto_sleep": True, "sleep_minutes": 1, "size": 170, "compact_ui": 1, "file_root": "", "wake_word": False,
            "memory": "O usuário se chama Paulo. Minha aparência é inspirada na cachorrinha Grazi.",
            "history": [], "position": None}
 
@@ -29,16 +29,20 @@ def load_state():
             raw = json.loads(path.read_text(encoding="utf-8"))
             if not isinstance(raw, dict):
                 return state
-            for key in ("model", "memory"):
+            for key in ("model", "memory", "file_root"):
                 if isinstance(raw.get(key), str):
                     state[key] = raw[key][:8000]
             if raw.get("voice_engine") in ("windows", "edge"):
                 state["voice_engine"] = raw["voice_engine"]
-            for key in ("voice", "motion"):
+            for key in ("voice", "motion", "auto_sleep", "wake_word"):
                 if isinstance(raw.get(key), bool):
                     state[key] = raw[key]
+            if type(raw.get("sleep_minutes")) is int:
+                state["sleep_minutes"] = max(1, min(30, raw["sleep_minutes"]))
             if isinstance(raw.get("size"), int):
-                state["size"] = max(200, min(460, raw["size"]))
+                state["size"] = max(120, min(460, raw["size"]))
+                if raw.get("compact_ui") != 1:
+                    state["size"] = min(state["size"], 220)
             if isinstance(raw.get("history"), list):
                 state["history"] = [m for m in raw["history"] if isinstance(m, dict)
                     and m.get("role") in ("user", "assistant")
@@ -137,7 +141,7 @@ def local_command(text):
     match = re.fullmatch(r"(?:calcule|calcular)\s+([0-9+\-*/().,%\s]+)", value)
     if match:
         expr = match.group(1).replace(",", ".").replace("%", "/100")
-        if len(expr) > 80 or not re.fullmatch(r"[0-9+\-*/().\s]+", expr):
+        if len(expr) > 80 or "**" in expr or "//" in expr or not re.fullmatch(r"[0-9+\-*/().\s]+", expr):
             return "Só calculo expressões numéricas simples, como: calcule 12 * 8."
         try:
             result = eval(expr, {"__builtins__": {}}, {})
@@ -147,4 +151,3 @@ def local_command(text):
             pass
         return "Não consegui calcular essa expressão."
     return None
-

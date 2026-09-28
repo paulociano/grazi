@@ -13,9 +13,9 @@ class IdleState:
         self.last_activity = self.clock()
         self.sleeping = False
 
-    def update(self, occupied=False):
+    def update(self, occupied=False, enabled=True):
         if occupied:
             self.touch()
-        elif self.clock() - self.last_activity > self.timeout:
+        elif enabled and self.clock() - self.last_activity > self.timeout:
             self.sleeping = True
         return self.sleeping

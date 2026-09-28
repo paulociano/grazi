@@ -40,7 +40,7 @@ class CoreTests(unittest.TestCase):
                 self.assertEqual(core.load_state()["model"], "qwen3:1.7b")
                 (Path(directory)/"state.json").write_text('{"history": [null, {"role":"system", "content":"bad"}], "size":9999}')
                 self.assertEqual(core.load_state()["history"], [])
-                self.assertEqual(core.load_state()["size"], 460)
+                self.assertEqual(core.load_state()["size"], 220)
             finally:
                 if old is None: os.environ.pop("GRAZI_DATA_DIR", None)
                 else: os.environ["GRAZI_DATA_DIR"] = old

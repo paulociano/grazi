@@ -11,7 +11,7 @@ if errorlevel 1 goto failed
 :validate
 "%GRAZI_ENV%\Scripts\python.exe" -c "import sys,struct; sys.exit(0 if sys.version_info[:2] == (3,12) and struct.calcsize('P') == 8 else 1)" >nul 2>&1
 if errorlevel 1 goto invalid
-"%GRAZI_ENV%\Scripts\python.exe" -c "import PySide6, PySide6.QtWidgets, PySide6.QtTextToSpeech; assert PySide6.__version__ == '6.8.3'" >nul 2>&1
+"%GRAZI_ENV%\Scripts\python.exe" -c "import PySide6, PySide6.QtWidgets, PySide6.QtTextToSpeech, PySide6.QtMultimedia, edge_tts; assert PySide6.__version__ == '6.8.3'" >nul 2>&1
 if not errorlevel 1 goto launch
 echo Preparando a Grazi com Python 3.12. A primeira abertura requer internet...
 "%GRAZI_ENV%\Scripts\python.exe" -m pip install --retries 5 --timeout 60 -r requirements.txt
@@ -38,3 +38,4 @@ echo Nao foi possivel iniciar a Grazi. Copie o erro acima para diagnostico.
 echo Se aparecer ConnectionResetError 10054, verifique sua conexao e tente novamente.
 pause
 exit /b 1
+

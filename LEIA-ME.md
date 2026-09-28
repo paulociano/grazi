@@ -1,4 +1,4 @@
-# Grazi • protótipo Windows 0.1
+# Grazi • protótipo Windows 0.6
 
 Mascote de desktop personalizado para Paulo, inspirado na Grazi real: caramelo robotizada, coleira rosa e orelhas relaxadas.
 
@@ -13,8 +13,8 @@ Mascote de desktop personalizado para Paulo, inspirado na Grazi real: caramelo r
    ollama pull qwen3:1.7b
    ```
 
-5. Dê dois cliques em **INICIAR.bat**. A primeira abertura baixa o PySide6 e cria um ambiente Python na pasta `.venv`. Pode levar alguns minutos. Não precisa executar como administrador.
-6. Na janela da Grazi, clique em **Conectar**. O aplicativo encontra os modelos locais. Em **Configurar**, você pode trocar o modelo.
+5. Dê dois cliques em **INICIAR.bat**. A primeira abertura baixa o PySide6 e o edge-tts e cria um ambiente Python na pasta `.venv-py312`. Pode levar alguns minutos. Não precisa executar como administrador.
+6. No botão direito da Grazi, abra **Abrir conversa completa** e clique em **Conectar**. O aplicativo encontra os modelos locais. Em **Configurar**, você pode trocar o modelo.
 7. Escreva uma mensagem e clique em **Enviar**.
 
 Se o Ollama não estiver atendendo, abra-o. Você também pode executar `ollama serve` no Terminal caso ele não esteja iniciado. Um erro de porta em uso normalmente significa que ele já está aberto.
@@ -32,12 +32,17 @@ Configuração informada: Intel Core i5-1335U, 8 GB de RAM (7,70 GB utilizáveis
 - Se ficar lento, feche programas pesados ou teste `ollama pull qwen3:0.6b`. Esse modelo menor tende a responder com menos qualidade.
 - Qwen3 4B fica como experiência posterior, se houver memória disponível. Não é o padrão para este equipamento. Não recomendo começar por 8B neste perfil.
 
+## Repouso automático
+
+Depois de mais de 1 minuto sem interação com a Grazi, ela troca suavemente para a pose deitada junto ao macaquinho de pelúcia, com movimento de respiração. O balão se recolhe. Cliques, arrastar, teclas e novos pedidos a acordam. O contador fica suspenso durante ditado, processamento, conexão e preparação/reprodução de voz. Isso mede interação com a Grazi, sem monitorar teclado ou mouse de outros aplicativos. Com movimentos desativados, a pose deitada permanece estática.
+
 ## Controles
 
 | Ação | Como fazer |
 |---|---|
 | Mover Grazi | Arrastar o mascote |
-| Conversar | Duplo clique no mascote |
+| Reabrir balão | Duplo clique no mascote |
+| Histórico completo | Botão direito → Abrir conversa completa |
 | Abrir opções ou sair | Botão direito no mascote ou ícone na bandeja |
 | Trocar modelo, tamanho, memória, voz | Configurar |
 | Apagar conversa | Limpar; confirma antes de apagar |
@@ -46,7 +51,11 @@ Configuração informada: Intel Core i5-1335U, 8 GB de RAM (7,70 GB utilizáveis
 
 ## Voz
 
-**Leitura:** habilite “Ler respostas em voz alta” em Configurar. Usa síntese de voz disponível no Windows via Qt; instale uma voz de português brasileiro nas opções de idioma/fala do Windows se necessário. Não há clonagem de voz.
+**Leitura Windows:** habilite “Ler respostas em voz alta” em Configurar. Usa síntese de voz disponível no Windows via Qt; instale uma voz de português brasileiro nas opções de idioma/fala do Windows se necessário. Não há clonagem de voz.
+
+**Leitura natural online:** em **Personalizar**, escolha **Francisca — feminina pt-BR (online)** e marque “Ler respostas em voz alta”. O botão **Ouvir amostra** reproduz uma frase com a opção selecionada. A voz online envia o texto falado à Microsoft. É opcional e exige internet; falhas são exibidas no balão. O texto completo permanece na conversa. A voz feminina não tem uma idade garantida.
+
+O balão acompanha cada trecho da fala. As setas permitem reler e interrompem a reprodução. Pode haver pausas entre trechos enquanto o próximo áudio é preparado. **Parar** interrompe e descarta resultados atrasados.
 
 **Ditado:** clique em Ditado e fale. A captura usa System.Speech no Windows, por até 10 segundos, e depende de um reconhecedor pt-BR instalado e de acesso ao microfone. O texto reconhecido aparece no campo para você revisar e enviar. Não existe escuta contínua nem ativação por “Grazi”.
 
@@ -58,9 +67,9 @@ Incluído: janela transparente flutuante, arrastar, menu e bandeja, flutuação 
 
 As ações locais não executam texto arbitrário. Elas são reconhecidas por uma lista fixa de comandos; a resposta do Qwen não pode iniciar processos nem montar comandos. Exemplos: `que horas são`, `que dia é hoje`, `calcule 12 * 8`, `abrir calculadora`, `abrir bloco de notas`, `status do computador` e `abrir github`.
 
-O visual usa a imagem aprovada; ainda não possui rig Live2D, piscadas, boca sincronizada, movimento independente das orelhas ou cauda. Essa animação exige novos assets ou rig. O movimento atual é uma oscilação discreta do mascote inteiro.
+O visual usa quatro quadros da personagem: repouso, piscada, boca aberta e atenção. A boca alterna durante a reprodução de voz; não é sincronização por fonemas. Não há rig Live2D nem movimento independente de cauda. As orelhas ficam relaxadas em repouso. Se o atlas estiver indisponível, o mascote usa a imagem estática original.
 
-Esta versão conversa e ajuda a redigir ou planejar. **Não controla o computador, não lê a tela, não acessa agenda, não navega e não envia mensagens.** Instruções geradas pelo modelo são apenas texto. Integrações operacionais são o próximo estágio.
+Esta versão conversa e ajuda a redigir ou planejar. **Além dos comandos explícitos acima, não controla o computador, não lê a tela, não acessa agenda, não navega de forma geral e não envia mensagens.** Instruções geradas pelo modelo são apenas texto. Integrações operacionais são o próximo estágio.
 
 Não é um instalador `.exe`: é uma aplicação Python com inicializador `.bat`. Nenhuma instalação foi feita no computador do usuário remotamente. Não configura execução automática ao iniciar o Windows.
 
@@ -68,16 +77,16 @@ Não é um instalador `.exe`: é uma aplicação Python com inicializador `.bat`
 
 Preferências e histórico ficam em `%LOCALAPPDATA%\Grazi\state.json`, em texto legível. Não coloque senhas nesse campo. Limpar remove o histórico ativo, mas mantém as preferências; para apagar tudo, saia da Grazi e exclua a pasta `%LOCALAPPDATA%\Grazi`.
 
-O aplicativo envia as mensagens exclusivamente para `http://127.0.0.1:11434`; não aceita servidor remoto nem modelos com “cloud” no nome. Isso não equivale a auditar a configuração do seu Ollama ou de modelos criados por terceiros. Use o modelo oficial indicado para este primeiro teste. Downloads de Python, bibliotecas e modelos exigem internet. Depois de preparados, chat e reconhecimento local não precisam de API paga.
+O chat com o modelo envia as mensagens para `http://127.0.0.1:11434`; não aceita servidor remoto nem modelos com “cloud” no nome. Isso não equivale a auditar a configuração do seu Ollama ou de modelos criados por terceiros. Use o modelo oficial indicado para este primeiro teste. A voz Francisca, se selecionada, envia separadamente o texto a ser falado ao serviço online da Microsoft; não envia a memória e o histórico inteiro como pacote de voz. Áudios temporários são removidos ao terminar ou cancelar (uma interrupção abrupta pode deixar arquivos na pasta temporária do Windows). Downloads de Python, bibliotecas e modelos exigem internet. Depois de preparados, chat e reconhecimento local não precisam de API paga.
 
 ## Verificação realizada
 
-Testes de persistência/corrupção de dados, contrato HTTP com servidor simulado, falha de conexão e bloqueio de nomes cloud. Interface renderizada e fluxo de chat exercitado em Linux com Qt offscreen. **Sem execução nativa no Windows, sem teste de áudio e sem benchmark real do Qwen neste notebook.** O servidor simulado verifica a integração, não a qualidade do modelo.
+Testes de persistência/corrupção de dados, contrato HTTP com servidor simulado, falha de conexão e bloqueio de nomes cloud. Interface renderizada e fluxo de chat exercitado em Linux com Qt offscreen. Os 16 testes incluem balão, paginação, bordas de tela, preferências de voz e descarte de áudio atrasado. A consulta ao serviço Edge falhou por certificado TLS neste ambiente; áudio real não foi validado. **Sem execução nativa no Windows, sem teste de áudio e sem benchmark real do Qwen neste notebook.** O servidor simulado verifica a integração, não a qualidade do modelo.
 
 ## Próxima evolução
 
 1. Medir consumo de memória e tempo de resposta do Qwen neste computador.
-2. Produzir estados animados da personagem preservando orelhas relaxadas.
+2. Avaliar a voz e a latência no Windows; testar futuramente Kokoro/Dora offline.
 3. Conectar uma primeira ferramenta de leitura, como agenda, com autenticação própria.
 4. Acrescentar ações explícitas e confirmação para alterações externas.
 
@@ -88,6 +97,9 @@ Pesquisa: 28/09/2026.
 - Ollama chat: https://docs.ollama.com/api/chat
 - Catálogo Qwen3: https://ollama.com/library/qwen3
 - Modelos instalados: https://docs.ollama.com/api/tags
+- Voz Edge: https://github.com/rany2/edge-tts (LGPLv3, instalado via pip)
+- Alternativa local Kokoro: https://github.com/hexgrad/kokoro
+- Voz Dora: https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md
 - Qt/PySide6: https://doc.qt.io/qtforpython-6/
 - Windows System.Speech: https://learn.microsoft.com/en-us/dotnet/api/system.speech.recognition.speechrecognitionengine
 - Referências de produto: https://github.com/Open-LLM-VTuber/Open-LLM-VTuber e https://github.com/moeru-ai/airi
@@ -95,3 +107,4 @@ Pesquisa: 28/09/2026.
 Implementação própria; não é um fork nem importa código desses dois projetos de referência. PySide6 6.8.3 é instalado separadamente pelo pip; as licenças de Qt/PySide6 e do modelo escolhido continuam aplicáveis. A imagem da Grazi foi gerada a partir da referência fornecida pelo usuário.
 
 Arsenal aplicado: research-and-synthesize, idea-refine, high-fidelity-image-generation e surgical-engineering.
+

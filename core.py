@@ -12,7 +12,7 @@ import urllib.request
 from pathlib import Path
 
 OLLAMA = "http://127.0.0.1:11434"
-DEFAULT = {"model": "qwen3:1.7b", "voice": False, "motion": True, "size": 300,
+DEFAULT = {"model": "qwen3:1.7b", "voice": False, "voice_engine": "windows", "motion": True, "size": 300,
            "memory": "O usuário se chama Paulo. Minha aparência é inspirada na cachorrinha Grazi.",
            "history": [], "position": None}
 
@@ -32,6 +32,8 @@ def load_state():
             for key in ("model", "memory"):
                 if isinstance(raw.get(key), str):
                     state[key] = raw[key][:8000]
+            if raw.get("voice_engine") in ("windows", "edge"):
+                state["voice_engine"] = raw["voice_engine"]
             for key in ("voice", "motion"):
                 if isinstance(raw.get(key), bool):
                     state[key] = raw[key]
@@ -145,3 +147,4 @@ def local_command(text):
             pass
         return "Não consegui calcular essa expressão."
     return None
+

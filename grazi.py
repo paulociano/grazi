@@ -6,12 +6,14 @@ import threading
 import time
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QTimer, Signal, QObject, QPoint, QRectF, QLocale
+from PySide6.QtCore import Qt, QTimer, Signal, QObject, QPoint, QRectF, QEvent
 from PySide6.QtGui import QColor, QPainter, QPixmap, QIcon, QAction, QFont
 from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QLineEdit, QTextEdit, QComboBox, QCheckBox, QSlider,
     QDialog, QFormLayout, QMenu, QSystemTrayIcon, QMessageBox)
-from PySide6.QtTextToSpeech import QTextToSpeech
+from idle import IdleState
+from speech import Speech
+from balloon import SpeechBalloon
 from core import load_state, save_state, list_models, chat, local_command
 
 ROOT = Path(__file__).resolve().parent
@@ -56,6 +58,17 @@ class Events(QObject):
     heard = Signal(str, bool)
 
 
+class ActivityFilter(QObject):
+    def __init__(self, controller):
+        super().__init__(controller.app)
+        self.c = controller
+
+    def eventFilter(self, obj, event):
+        if event.type() in (QEvent.Type.MouseButtonPress, QEvent.Type.KeyPress, QEvent.Type.Wheel):
+            self.c.touch()
+        return False
+
+
 class Mascot(QWidget):
     def __init__(self, controller):
         super().__init__()
@@ -70,6 +83,13 @@ class Mascot(QWidget):
         self.pix = QPixmap(str(self.asset_path))
         if self.pix.isNull():
             raise RuntimeError(f"Arquivo da Grazi não pôde ser carregado pelo Qt: {self.asset_path}")
+        self.frames = []
+        atlas = QPixmap(str(ROOT / "assets/grazi-expressions.png"))
+        if not atlas.isNull() and atlas.size().width() == 1141 and atlas.size().height() == 1378:
+            self.frames = [atlas.copy(x, y, 510, 675) for x, y in
+                           [(96, 8), (621, 8), (96, 694), (621, 694)]]
+        self.sleep_pix = QPixmap(str(ROOT / "assets/grazi-sleep.png"))
+        self.sleep_blend = 0.0
         self.phase = 0
         self.status = "Vamos conversar?"
         self.drag = None
@@ -77,7 +97,7 @@ class Mascot(QWidget):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.tick)
         self.timer.start(50)
-        self.setToolTip("Arraste para mover • Duplo clique para conversar • Botão direito para opções")
+        self.setToolTip("Arraste para mover • Duplo clique para abrir o balão • Botão direito para conversa completa")
 
     def resize_pet(self):
         size = self.c.state["size"]
@@ -85,7 +105,17 @@ class Mascot(QWidget):
 
     def tick(self):
         self.phase += .07
+        was_sleeping = self.c.idle.sleeping
+        sleeping = self.c.idle.update(self.c.busy or self.c.listening or self.c.connecting or self.c.speech.active or self.drag is not None)
+        if sleeping and not was_sleeping:
+            self.c.balloon.hide()
+        target = 1.0 if sleeping and not self.sleep_pix.isNull() else 0.0
+        previous = self.sleep_blend
         if self.c.state["motion"]:
+            self.sleep_blend += max(-.08, min(.08, target-self.sleep_blend))
+        else:
+            self.sleep_blend = target
+        if self.c.state["motion"] or previous != self.sleep_blend:
             self.update()
 
     def paintEvent(self, event):
@@ -93,29 +123,49 @@ class Mascot(QWidget):
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
         bob = math.sin(self.phase) * 2 if self.c.state["motion"] else 0
+        p.setOpacity(1.0-self.sleep_blend)
         p.setBrush(QColor("#242731")); p.setPen(Qt.PenStyle.NoPen)
         p.drawRoundedRect(QRectF(12, 4, self.width()-24, 31), 15, 15)
         p.setPen(QColor("#f5d1a5")); p.setFont(QFont("Segoe UI", 10))
         p.drawText(QRectF(12, 4, self.width()-24, 31), Qt.AlignmentFlag.AlignCenter, self.status)
         area = QRectF(9, 42 + bob, self.width()-18, self.height()-51)
-        fitted = self.pix.size().scaled(area.size().toSize(), Qt.AspectRatioMode.KeepAspectRatio)
+        pix = self.pix
+        if self.frames:
+            frame = 0
+            if self.c.state["motion"]:
+                if self.c.speaking: frame = 2 if int(time.monotonic() * 6) % 2 else 0
+                elif self.c.listening: frame = 3
+                elif time.monotonic() % 4.7 < .18: frame = 1
+            pix = self.frames[frame]
+        fitted = pix.size().scaled(area.size().toSize(), Qt.AspectRatioMode.KeepAspectRatio)
         rect = QRectF(area.x()+(area.width()-fitted.width())/2, area.y(), fitted.width(), fitted.height())
         pose = pose_parameters(self.phase, self.c.state["motion"], self.c.listening,
-                               self.c.busy, self.c.tts.state() == QTextToSpeech.State.Speaking)
+                               self.c.busy, self.c.speaking)
         if pose["indicator"]:
             glow = 9 + pose["pulse"]
             p.setPen(Qt.PenStyle.NoPen)
             p.setBrush(QColor(pose["indicator"]))
-            p.setOpacity(.10)
+            p.setOpacity(.10 * (1.0-self.sleep_blend))
             p.drawEllipse(rect.adjusted(-glow, -glow, glow, glow))
-            p.setOpacity(1.0)
+            p.setOpacity(1.0-self.sleep_blend)
         p.save()
         p.translate(rect.center().x(), rect.bottom())
         p.rotate(pose["angle"])
         p.scale(pose["scale"], pose["scale"])
         p.translate(-rect.center().x(), -rect.bottom())
-        p.drawPixmap(rect, self.pix, QRectF(self.pix.rect()))
+        p.drawPixmap(rect, pix, QRectF(pix.rect()))
         p.restore()
+        if self.sleep_blend > 0:
+            area = QRectF(9, 42, self.width()-18, self.height()-51)
+            fitted = self.sleep_pix.size().scaled(area.size().toSize(), Qt.AspectRatioMode.KeepAspectRatio)
+            rect = QRectF(area.center().x()-fitted.width()/2, area.bottom()-fitted.height(), fitted.width(), fitted.height())
+            breath = math.sin(time.monotonic()*1.6) * .007 if self.c.state["motion"] else 0
+            p.save(); p.setOpacity(self.sleep_blend)
+            p.translate(rect.center().x(), rect.bottom())
+            p.scale(1.0, 1.0+breath)
+            p.translate(-rect.center().x(), -rect.bottom())
+            p.drawPixmap(rect, self.sleep_pix, QRectF(self.sleep_pix.rect()))
+            p.restore()
         p.end()
 
     def mousePressEvent(self, event):
@@ -134,7 +184,11 @@ class Mascot(QWidget):
         self.c.persist()
 
     def mouseDoubleClickEvent(self, event):
-        self.c.show_chat()
+        self.c.show_balloon()
+
+    def moveEvent(self, event):
+        if hasattr(self.c, "balloon"): self.c.balloon.reanchor()
+        super().moveEvent(event)
 
     def contextMenuEvent(self, event):
         self.c.menu().exec(event.globalPos())
@@ -155,6 +209,15 @@ class Settings(QDialog):
         hint.setObjectName("sub"); layout.addRow(hint)
         self.voice = QCheckBox("Ler respostas em voz alta")
         self.voice.setChecked(c.state["voice"]); layout.addRow(self.voice)
+        self.engine = QComboBox()
+        self.engine.addItem("Windows — instalada no computador", "windows")
+        self.engine.addItem("Francisca — feminina pt-BR (online)", "edge")
+        self.engine.setCurrentIndex(1 if c.state["voice_engine"] == "edge" else 0)
+        layout.addRow("Voz", self.engine)
+        privacy = QLabel("Francisca usa internet e envia o texto da fala ao serviço da Microsoft. A IA continua no Ollama local. A voz do Windows não usa esse serviço.")
+        privacy.setWordWrap(True); privacy.setObjectName("sub"); layout.addRow(privacy)
+        test = QPushButton("Ouvir amostra da voz selecionada")
+        test.clicked.connect(self.test_voice); layout.addRow(test)
         self.motion = QCheckBox("Movimento suave do mascote")
         self.motion.setChecked(c.state["motion"]); layout.addRow(self.motion)
         self.size = QSlider(Qt.Orientation.Horizontal); self.size.setRange(200, 460)
@@ -167,14 +230,21 @@ class Settings(QDialog):
         button = QPushButton("Salvar"); button.setObjectName("primary")
         button.clicked.connect(self.save); layout.addRow(button)
 
+    def test_voice(self):
+        self.c.stop_voice()
+        text = "Oi, Paulo! Eu sou a Grazi. Estou aqui para ajudar você."
+        self.c.balloon.message(text)
+        self.c.speech.say(text, self.engine.currentData())
+
     def save(self):
         model = self.model.currentText().strip()
         if not model or "cloud" in model.lower():
             QMessageBox.warning(self, "Modelo local", "Informe o nome de um modelo local do Ollama.")
             return
-        self.c.state.update(model=model, voice=self.voice.isChecked(), motion=self.motion.isChecked(),
+        self.c.state.update(model=model, voice=self.voice.isChecked(), voice_engine=self.engine.currentData(), motion=self.motion.isChecked(),
             size=self.size.value(), memory=self.memory.toPlainText()[:8000])
         self.c.pet.resize_pet(); self.c.pet.update(); self.c.place_pet()
+        self.c.stop_voice(); self.c.balloon.reanchor()
         self.c.persist(); self.c.update_label(); self.accept()
 
 
@@ -200,7 +270,7 @@ class ChatWindow(QWidget):
         self.send_button = QPushButton("Enviar"); self.send_button.setObjectName("primary")
         self.send_button.clicked.connect(c.send); actions.addWidget(self.send_button)
         layout.addLayout(actions)
-        help_label = QLabel("Duplo clique na Grazi abre esta conversa. Fechar a janela mantém o mascote.")
+        help_label = QLabel("Botão direito na Grazi abre esta conversa. Fechar a janela mantém o mascote.")
         help_label.setObjectName("sub"); help_label.setWordWrap(True); layout.addWidget(help_label)
 
     def line(self, who, text):
@@ -213,14 +283,21 @@ class ChatWindow(QWidget):
 class Controller:
     def __init__(self, app):
         self.app = app; self.state = load_state(); self.available_models = []
+        self.idle = IdleState()
+        self.speaking = False
         self.busy = False; self.listening = False; self.connecting = False
         self.events = Events(); self.events.answer.connect(self.on_answer)
         self.events.models.connect(self.on_models); self.events.heard.connect(self.on_heard)
-        self.tts = QTextToSpeech(app)
-        self.tts.setLocale(QLocale("pt_BR"))
-        self.tts.stateChanged.connect(self.voice_state)
+        self.speech = Speech(app)
         self.window = ChatWindow(self)
         self.pet = Mascot(self)
+        self.balloon = SpeechBalloon(self)
+        self.activity_filter = ActivityFilter(self)
+        app.installEventFilter(self.activity_filter)
+        self.speech.speaking.connect(self.voice_state)
+        self.speech.page.connect(self.balloon.select_page)
+        self.speech.error.connect(self.voice_error)
+        app.aboutToQuit.connect(self.stop_voice)
         self.tray = QSystemTrayIcon(QIcon(str(ROOT / "assets/grazi.png")), app)
         self.tray.setToolTip("Grazi • duplo clique para conversar")
         self.tray.setContextMenu(self.menu())
@@ -231,6 +308,10 @@ class Controller:
             self.window.line("Você" if msg["role"] == "user" else "Grazi", msg["content"])
         if not self.state["history"]:
             self.window.line("Grazi", "Minha casinha está pronta! Abra o Ollama, baixe um Qwen e clique em Conectar. Em Configurar você escolhe o modelo e as preferências que devo lembrar.")
+
+    def touch(self):
+        self.idle.touch()
+        self.pet.update()
 
     def persist(self):
         try: save_state(self.state)
@@ -252,17 +333,22 @@ class Controller:
 
     def menu(self):
         menu = QMenu()
-        for title, callback in [("Conversar", self.show_chat), ("Personalizar", self.settings),
+        for title, callback in [("Abrir balão", self.show_balloon), ("Abrir conversa completa", self.show_chat), ("Ditado", self.listen), ("Parar voz", self.stop_voice), ("Personalizar", self.settings),
                                 ("Mostrar Grazi", self.show_pet), ("Ocultar Grazi", self.hide_pet),
                                 ("Sair", self.app.quit)]:
             action = QAction(title, menu); action.triggered.connect(callback); menu.addAction(action)
         return menu
 
-    def show_pet(self): self.pet.show()
+    def show_pet(self): self.touch(); self.pet.show()
+    def show_balloon(self):
+        self.touch()
+        self.pet.show(); self.balloon.reanchor(); self.balloon.show()
+        self.balloon.raise_(); self.balloon.activateWindow(); self.balloon.input.setFocus()
     def hide_pet(self):
-        if self.tray.isVisible(): self.pet.hide()
+        if self.tray.isVisible(): self.pet.hide(); self.balloon.hide()
         else: self.show_chat()
     def show_chat(self):
+        self.touch()
         self.window.show(); self.window.raise_(); self.window.activateWindow(); self.window.input.setFocus()
     def settings(self): Settings(self).exec()
     def clear(self):
@@ -270,10 +356,16 @@ class Controller:
         if QMessageBox.question(self.window, "Limpar conversa", "Apagar o histórico local? A memória editável será mantida.") == QMessageBox.StandardButton.Yes:
             self.state["history"] = []; self.window.log.clear(); self.persist()
     def set_status(self, text): self.pet.status = text; self.pet.update()
-    def stop_voice(self): self.tts.stop()
+    def stop_voice(self): self.speech.stop()
     def voice_state(self, state):
-        if state == QTextToSpeech.State.Speaking: self.set_status("Falando com você")
+        self.touch()
+        self.speaking = state
+        if state: self.set_status("Falando com você")
         elif not self.busy and not self.listening: self.set_status("Estou por aqui")
+
+    def voice_error(self, text):
+        self.window.line("Voz", text)
+        self.balloon.message(text)
 
     def connect_models(self):
         if self.connecting: return
@@ -295,11 +387,17 @@ class Controller:
     def send(self):
         text = self.window.input.text().strip()
         if not text or self.busy or self.listening: return
-        self.stop_voice(); self.busy = True
+        self.touch(); self.stop_voice(); self.busy = True
         self.window.send_button.setEnabled(False); self.window.mic.setEnabled(False)
+        self.balloon.input.clear(); self.balloon.send_button.setEnabled(False)
+        self.balloon.message("Pensando…")
         self.window.input.clear(); self.window.line("Você", text)
         self.pending = {"role": "user", "content": text}
-        immediate = local_command(text)
+        try:
+            immediate = local_command(text)
+        except Exception as exc:
+            self.on_answer(f"Não consegui executar esse comando: {exc}", False)
+            return
         if immediate is not None:
             self.on_answer(immediate, True)
             return
@@ -312,22 +410,26 @@ class Controller:
         threading.Thread(target=run, daemon=True).start()
 
     def on_answer(self, text, ok):
+        self.touch()
         self.busy = False; self.window.send_button.setEnabled(True); self.window.mic.setEnabled(True)
+        self.balloon.send_button.setEnabled(True); self.balloon.message(text)
         self.window.line("Grazi" if ok else "Conexão", text); self.set_status("Estou por aqui" if ok else "Confira a conexão")
         if ok:
             self.state["history"] = (self.state["history"] + [self.pending, {"role": "assistant", "content": text}])[-40:]
             self.persist()
             if self.state["voice"]:
-                if self.tts.state() == QTextToSpeech.State.Error:
-                    self.window.line("Voz", "Voz indisponível. Instale uma voz de português nas configurações do Windows.")
-                else: self.tts.say(text)
-        else: self.window.input.setText(self.pending["content"])
+                self.speech.say(text, self.state["voice_engine"])
+        else:
+            self.window.input.setText(self.pending["content"])
+            self.balloon.input.setText(self.pending["content"])
 
     def listen(self):
         if self.busy or self.listening: return
-        self.stop_voice()
+        self.touch(); self.stop_voice()
         if sys.platform != "win32":
             self.window.line("Ditado", "O ditado desta versão usa o reconhecimento instalado no Windows."); return
+        self.balloon.message("Estou ouvindo por até 10 segundos…")
+        self.balloon.send_button.setEnabled(False)
         self.listening = True; self.set_status("Ouvindo por até 10 segundos")
         self.window.mic.setEnabled(False); self.window.send_button.setEnabled(False)
         def run():
@@ -343,10 +445,15 @@ class Controller:
         threading.Thread(target=run, daemon=True).start()
 
     def on_heard(self, text, ok):
+        self.touch()
         self.listening = False; self.window.mic.setEnabled(True); self.window.send_button.setEnabled(True)
         self.set_status("Revise e envie" if ok else "Estou por aqui")
-        if ok: self.window.input.setText(text); self.window.input.setFocus()
-        else: self.window.line("Ditado", text)
+        self.balloon.send_button.setEnabled(True)
+        if ok:
+            self.window.input.setText(text); self.balloon.input.setText(text)
+            self.balloon.message("Revise o texto e pressione Enviar."); self.show_balloon()
+        else:
+            self.window.line("Ditado", text); self.balloon.message(text)
 
 
 def main():
@@ -354,9 +461,10 @@ def main():
     app.setQuitOnLastWindowClosed(False); app.setStyleSheet(STYLE)
     app.setWindowIcon(QIcon(str(ROOT / "assets/grazi.png")))
     controller = Controller(app)
-    controller.show_chat()
+    controller.show_balloon()
     return app.exec()
 
 
 if __name__ == "__main__":
     sys.exit(main())
+

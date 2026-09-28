@@ -1,1 +1,22 @@
-Verificado em 28/09/2026: 3 testes unitarios passaram. Fluxo de UI com servidor HTTP simulado passou: lista de modelos, conversa em dois turnos, controles, preferencias e persistencia. Render Qt offscreen inspecionado. Windows nativo, audio e modelo Qwen real ainda nao testados.
+Grazi 0.6 — verificação
+
+16 testes unittest aprovados em Linux/Qt offscreen:
+- Núcleo: comandos explícitos, persistência/corrupção, contrato HTTP simulado,
+  filtragem de modelos cloud e falha de conexão.
+- Desktop: inicia com balão e janela grande oculta; envio e histórico;
+  falha restaura mensagem; balão acompanha movimento e respeita bordas;
+  paginação mantém palavras e acompanha índice da fala;
+  cancelamento rejeita áudio atrasado e remove arquivo;
+  erro de voz volta ao repouso; seleção de voz persiste;
+  texto exibido literalmente e páginas limitadas.
+
+Atlas de expressões e imagem alternativa carregados pelo Qt e inspecionados.
+PNG publicado deve corresponder ao SHA do blob local; publicação verifica isso.
+
+Limites: sem execução nativa Windows, sem áudio real e sem inferência Qwen real.
+Consulta às vozes Edge falhou por validação de certificado TLS neste ambiente.
+Não foi desativada a verificação de certificado.
+Ouvindo/pensando/falando são estados da aplicação; boca não faz lip-sync fonético.
+A voz online é opcional, requer internet e envia o texto da fala à Microsoft.
+
+Repouso: limite de 60 segundos, despertar por tecla e suspensão enquanto ocupada testados. Pose deitada renderizada sobre fundo sólido para verificar alpha.

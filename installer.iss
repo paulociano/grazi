@@ -22,7 +22,7 @@ UninstallDisplayIcon={app}\{#AppExeName}
 DisableProgramGroupPage=yes
 
 [Files]
-Source: "dist\Grazi\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
+Source: "dist\Grazi.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "README.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "LEIA-ME.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "ABOUT.md"; DestDir: "{app}"; Flags: ignoreversion

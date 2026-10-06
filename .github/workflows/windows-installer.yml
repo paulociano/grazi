@@ -17,9 +17,9 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12.x'
           architecture: x64
@@ -31,14 +31,27 @@ jobs:
         run: python -m PyInstaller --noconfirm --clean grazi.spec
       - name: Smoke test packaged executable
         run: .\\dist\\Grazi.exe --smoke-test
+      - name: Report executable size
+        shell: powershell
+        run: |
+          $bytes = (Get-Item '.\\dist\\Grazi.exe').Length
+          Write-Host ("Grazi.exe: {0:N1} MB" -f ($bytes / 1MB))
       - name: Install Inno Setup
         shell: powershell
-        run: choco install innosetup --no-progress --yes
+        run: choco install innosetup --version=6.7.1 --no-progress --yes
       - name: Build installer
         shell: powershell
         run: '& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer.iss'
+      - name: Write installer checksum
+        shell: powershell
+        run: |
+          $path = 'installer-output/Grazi-Setup-v0.9.0.exe'
+          $hash = (Get-FileHash $path -Algorithm SHA256).Hash.ToLower()
+          "$hash  Grazi-Setup-v0.9.0.exe" | Set-Content "$path.sha256" -Encoding ascii
       - name: Upload installer artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: Grazi-Windows-installer
-          path: installer-output/Grazi-Setup-v0.9.0.exe
+          path: |
+            installer-output/Grazi-Setup-v0.9.0.exe
+            installer-output/Grazi-Setup-v0.9.0.exe.sha256

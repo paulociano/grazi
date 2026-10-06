@@ -1,4 +1,4 @@
-# Grazi • protótipo Windows 0.8
+# Grazi • protótipo Windows 0.9.0
 
 Mascote de desktop personalizado para Paulo, inspirado na Grazi real: caramelo robotizada, coleira rosa e orelhas relaxadas.
 
@@ -46,7 +46,7 @@ Em **Personalizar**, você pode desligar o repouso automático ou ajustar o temp
 
 ## Ativação por voz
 
-Em **Personalizar**, a opção **Ativar ao ouvir “Grazi”** fica ligada por padrão em instalações novas e é migrada para instalações antigas que ainda não tinham uma escolha explícita. A Grazi usa o reconhecedor `System.Speech` local do Windows, com uma gramática que escuta somente a palavra de ativação. Ao ouvir “Grazi”, o reconhecimento de ditado é iniciado para você falar e revisar o pedido. A escuta pausa enquanto ela processa ou fala e não usa gravação contínua na nuvem. É necessário instalar um reconhecedor de fala **Português (Brasil)** no Windows; se houver uma falha temporária, a Grazi mostra o diagnóstico e tenta novamente. Você pode desligá-la em Personalizar ou no menu do botão direito.
+Na primeira execução, a Grazi pergunta se você quer ativar **Ativar ao ouvir “Grazi”**. O padrão é não ativar sem consentimento. A escolha fica salva e pode ser alterada em **Personalizar**. A Grazi usa o reconhecedor `System.Speech` local do Windows, com uma gramática que escuta somente a palavra de ativação. Ao ouvir “Grazi”, o reconhecimento de ditado é iniciado para você falar e revisar o pedido. A escuta pausa enquanto ela processa ou fala e não usa gravação contínua na nuvem. É necessário instalar um reconhecedor de fala **Português (Brasil)** no Windows; se houver uma falha temporária, a Grazi mostra o diagnóstico e tenta novamente. Você pode desligá-la em Personalizar ou no menu do botão direito.
 
 ## Arquivos e aplicativos
 

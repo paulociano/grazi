@@ -1,7 +1,5 @@
-# PyInstaller one-directory build for the Windows installer.
+# PyInstaller one-file build for the Windows installer.
 from pathlib import Path
-from PyInstaller.utils.hooks import collect_all
-
 ROOT = Path(SPECPATH)
 datas = [
     (str(ROOT / 'assets'), 'assets'),
@@ -10,14 +8,6 @@ datas = [
 ]
 binaries = []
 hiddenimports = ['edge_tts', 'send2trash']
-for package in ('PySide6', 'edge_tts', 'send2trash'):
-    try:
-        package_datas, package_binaries, package_hidden = collect_all(package)
-        datas += package_datas
-        binaries += package_binaries
-        hiddenimports += package_hidden
-    except Exception:
-        pass
 
 a = Analysis(
     ['grazi.py'],

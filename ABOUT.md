@@ -30,7 +30,7 @@ Comando explícito? ── sim → ação permitida e confirmação quando neces
 Ollama local → resposta em português → balão e voz opcional
 ```
 
-O reconhecimento da palavra “Grazi” é separado do ditado: por padrão, a gramática local procura a palavra de ativação; depois a Grazi inicia uma captura curta para você revisar o pedido. A escuta é pausada enquanto ela fala, pensa ou executa uma ação. Em instalações antigas, a ativação é migrada para ligada quando ainda não havia uma escolha explícita.
+O reconhecimento da palavra “Grazi” é separado do ditado. Na primeira execução, a Grazi pede consentimento antes de ativar o microfone de wake word; o padrão é permanecer desligado sem essa escolha. Quando ativado, a gramática local procura apenas a palavra de ativação e então inicia uma captura curta para você revisar o pedido. A escuta é pausada enquanto ela fala, pensa ou executa uma ação.
 
 ## Assistência atual
 

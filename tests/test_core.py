@@ -33,7 +33,7 @@ class CoreTests(unittest.TestCase):
             old = os.environ.get("GRAZI_DATA_DIR")
             os.environ["GRAZI_DATA_DIR"] = directory
             try:
-                state = core.load_state(); state["memory"] = "Café e manhãs."
+                state = core.load_state(); self.assertFalse(state["wake_word"]); state["memory"] = "Café e manhãs."
                 core.save_state(state)
                 self.assertEqual(core.load_state()["memory"], "Café e manhãs.")
                 (Path(directory)/"state.json").write_text('{broken')
@@ -42,7 +42,7 @@ class CoreTests(unittest.TestCase):
                 self.assertEqual(core.load_state()["history"], [])
                 self.assertEqual(core.load_state()["size"], 220)
                 (Path(directory)/"state.json").write_text('{"wake_word": false}')
-                self.assertTrue(core.load_state()["wake_word"])
+                self.assertFalse(core.load_state()["wake_word"])
                 (Path(directory)/"state.json").write_text('{"wake_word": false, "wake_word_configured": true}')
                 self.assertFalse(core.load_state()["wake_word"])
             finally:

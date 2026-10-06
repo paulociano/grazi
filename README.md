@@ -10,7 +10,7 @@ Após o período de inatividade configurado, a Grazi se deita com seu macaquinho
 
 <img src="assets/grazi-sleep.png" alt="Grazi deitada ao lado de um macaquinho de pelúcia" width="520">
 
-**Versão 0.8 — balão compacto, ativação por voz e assistência local com arquivos.**
+**Versão 0.9.0 — balão compacto, ativação por voz com consentimento e assistência local com arquivos.**
 
 > A Grazi é um protótipo pessoal em evolução. Os comandos de arquivo são explícitos, limitados a uma pasta escolhida e sempre pedem confirmação para operações destrutivas.
 
@@ -35,7 +35,7 @@ Histórico e preferências existentes são preservados em `%LOCALAPPDATA%\Grazi`
 ## Novidades
 
 - Interface menor: Grazi inicia em 170 px e o balão em 270 px; o tamanho da personagem pode ser ajustado em Personalizar.
-- Ativação por voz ao ouvir “Grazi”, usando o reconhecedor local pt-BR do Windows. Ela inicia automaticamente por padrão, inclusive ao atualizar uma instalação antiga, pausa enquanto a Grazi fala e tenta novamente se houver uma falha temporária. Pode ser desligada em Personalizar.
+- Ativação por voz ao ouvir “Grazi”, usando o reconhecedor local pt-BR do Windows. Na primeira execução, a Grazi pede consentimento antes de habilitar o microfone de ativação. Depois disso, a escolha fica salva e pode ser alterada em Personalizar.
 - Pasta de trabalho escolhida em Personalizar. Comandos explícitos para listar, abrir e ler arquivos, salvar texto/respostas, enviar arquivos à Lixeira, abrir Calculadora/Bloco de Notas e solicitar o fechamento de instâncias abertas pela Grazi.
 - Arquivos são restritos à pasta escolhida; executáveis não são abertos. Sobrescrita e exclusão exigem confirmação. Fechamento usa WM_CLOSE e preserva pedidos de salvamento do aplicativo.
 

@@ -314,6 +314,7 @@ class ChatWindow(QWidget):
 class Controller:
     def __init__(self, app):
         self.app = app; self.state = load_state(); self.available_models = []
+        self.first_run = not bool(self.state["history"])
         self.idle = IdleState(timeout=self.state["sleep_minutes"] * 60)
         self.speaking = False
         self.busy = False; self.listening = False; self.connecting = False
@@ -344,8 +345,11 @@ class Controller:
         self.place_pet(); self.pet.show(); self.update_label()
         for msg in self.state["history"]:
             self.window.line("Você" if msg["role"] == "user" else "Grazi", msg["content"])
-        if not self.state["history"]:
-            self.window.line("Grazi", "Minha casinha está pronta! Abra o Ollama, baixe um Qwen e clique em Conectar. Em Configurar você escolhe o modelo e as preferências que devo lembrar.")
+        if self.first_run:
+            intro = ("Antes da primeira conversa, vou verificar se o Ollama e um modelo local estão prontos. "
+                     "Se faltar algo, eu mostro o próximo passo aqui mesmo.")
+            self.window.line("Grazi", intro)
+            self.balloon.message(intro)
 
     def touch(self):
         self.idle.touch()
@@ -361,6 +365,22 @@ class Controller:
         return QMessageBox.question(self.balloon, title, description,
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes
+
+    def offer_wake_word(self):
+        if self.state.get("wake_word_configured"):
+            return
+        enabled = QMessageBox.question(
+            self.balloon,
+            "Ativação por voz",
+            "Quer chamar a Grazi dizendo “Grazi”?\n\n"
+            "O reconhecimento usa o microfone e o reconhecedor local pt-BR do Windows enquanto a Grazi estiver livre. "
+            "Você pode mudar isso depois em Personalizar.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        ) == QMessageBox.StandardButton.Yes
+        self.state["wake_word"] = enabled
+        self.state["wake_word_configured"] = True
+        self.persist(); self.update_label(); self.sync_wake()
 
     def sync_wake(self):
         allowed = (self.state['wake_word'] and not (self.busy or self.listening or self.speech.active)
@@ -470,12 +490,21 @@ class Controller:
 
     def on_models(self, models, error):
         self.connecting = False; self.available_models = models
-        if error: self.window.status.setText(error)
-        elif not models: self.window.status.setText("Ollama conectado, sem modelos locais. Baixe um Qwen primeiro.")
+        if error:
+            self.window.status.setText(error)
+            if self.first_run:
+                self.balloon.message("Para começar, abra o Ollama. Depois volte aqui e use Conectar. Se ainda não tiver um modelo, instale qwen3:1.7b.")
+        elif not models:
+            self.window.status.setText("Ollama conectado, sem modelos locais. Baixe um Qwen primeiro.")
+            if self.first_run:
+                self.balloon.message("Encontrei o Ollama, mas ainda falta um modelo local. No Terminal, execute: ollama pull qwen3:1.7b")
         else:
             if self.state["model"] not in models:
                 self.state["model"] = next((m for m in models if m.startswith("qwen")), models[0]); self.persist()
             self.update_label(); self.window.status.setText(self.window.status.text()+" · Conectado")
+            if self.first_run:
+                self.balloon.message("Tudo pronto. Agora podemos conversar por aqui.")
+                self.first_run = False
 
     def send(self):
         text = self.window.input.text().strip()
@@ -555,12 +584,31 @@ class Controller:
             self.window.line("Ditado", text); self.balloon.message(text)
 
 
+def smoke_check():
+    required = [
+        ROOT / "assets" / "grazi.png",
+        ROOT / "assets" / "grazi-expressions.png",
+        ROOT / "assets" / "grazi-sleep.png",
+        ROOT / "dictation.ps1",
+        ROOT / "wake_word.ps1",
+    ]
+    missing = [str(path) for path in required if not path.is_file()]
+    if missing:
+        raise RuntimeError("Arquivos obrigatórios ausentes: " + ", ".join(missing))
+    print("Grazi smoke test OK")
+    return 0
+
+
 def main():
+    if "--smoke-test" in sys.argv:
+        return smoke_check()
     app = QApplication(sys.argv); app.setApplicationName("Grazi")
     app.setQuitOnLastWindowClosed(False); app.setStyleSheet(STYLE)
     app.setWindowIcon(QIcon(str(ROOT / "assets/grazi.png")))
     controller = Controller(app)
     controller.show_balloon()
+    QTimer.singleShot(150, controller.connect_models)
+    QTimer.singleShot(600, controller.offer_wake_word)
     return app.exec()
 
 

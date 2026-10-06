@@ -52,6 +52,7 @@ class DesktopTests(unittest.TestCase):
         self.assertEqual(self.c.balloon.next_button.accessibleName(), 'Próxima resposta')
         self.assertEqual(self.c.balloon.send_button.accessibleName(), 'Enviar mensagem')
         self.assertEqual(self.c.balloon.input.accessibleName(), 'Mensagem para a Grazi')
+        self.c.balloon.message('Uma página.'); APP.processEvents()
         self.assertFalse(self.c.balloon.prev_button.isEnabled())
         self.assertFalse(self.c.balloon.next_button.isEnabled())
 

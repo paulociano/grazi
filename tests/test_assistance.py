@@ -28,7 +28,7 @@ class AssistanceTests(unittest.TestCase):
         self.assertIn("Arquivo: notas.txt", self.actions.execute("listar arquivos"))
         self.assertIn("Olá, Grazi!", self.actions.execute("ler arquivo notas.txt"))
         self.actions.execute("abrir arquivo notas.txt")
-        self.assertEqual(self.opened, [self.root / "notas.txt"])
+        self.assertEqual([p.resolve() for p in self.opened], [(self.root / "notas.txt").resolve()])
         with self.assertRaises(ValueError):
             self.actions.execute("ler arquivo ../fora.txt")
 

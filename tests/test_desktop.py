@@ -8,7 +8,7 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import QPoint
-from grazi import Controller, STYLE
+from grazi import Controller, Settings, STYLE
 from speech import Speech, speech_chunks
 
 APP = QApplication.instance() or QApplication([])
@@ -42,6 +42,31 @@ class DesktopTests(unittest.TestCase):
         self.assertTrue(all(not p.isNull() for p in self.c.pet.frames))
         self.c.show_chat()
         self.assertTrue(self.c.window.isVisible())
+
+    def test_balloon_touch_targets_and_accessible_names(self):
+        self.assertEqual((self.c.balloon.width(), self.c.balloon.height()), (336, 232))
+        self.assertGreaterEqual(self.c.balloon.prev_button.width(), 32)
+        self.assertGreaterEqual(self.c.balloon.next_button.width(), 32)
+        self.assertGreaterEqual(self.c.balloon.send_button.width(), 36)
+        self.assertEqual(self.c.balloon.prev_button.accessibleName(), 'Resposta anterior')
+        self.assertEqual(self.c.balloon.next_button.accessibleName(), 'Próxima resposta')
+        self.assertEqual(self.c.balloon.send_button.accessibleName(), 'Enviar mensagem')
+        self.assertEqual(self.c.balloon.input.accessibleName(), 'Mensagem para a Grazi')
+        self.c.balloon.message('Uma página.'); APP.processEvents()
+        self.assertFalse(self.c.balloon.prev_button.isEnabled())
+        self.assertFalse(self.c.balloon.next_button.isEnabled())
+
+    def test_settings_show_size_value_and_accessible_fields(self):
+        dialog = Settings(self.c)
+        try:
+            self.assertEqual(dialog.size_value.text(), f"{self.c.state['size']} px")
+            dialog.size.setValue(240); APP.processEvents()
+            self.assertEqual(dialog.size_value.text(), '240 px')
+            self.assertEqual(dialog.model.accessibleName(), 'Modelo local')
+            self.assertEqual(dialog.file_root.accessibleName(), 'Pasta de trabalho')
+            self.assertEqual(dialog.memory.accessibleName(), 'Memória editável')
+        finally:
+            dialog.close(); dialog.deleteLater()
 
     def test_balloon_send_and_history(self):
         self.c.balloon.input.setText('que horas são')
